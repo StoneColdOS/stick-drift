@@ -1,7 +1,6 @@
 extends Control
 ## On-screen controls, landscape:
-##   Bottom-left:  steering wheel, top half peeking up from the bottom edge. Slide a thumb along
-##                 it to turn; let go and it spins back to center.
+##   Bottom-left:  steering wheel. Put a thumb on it and twist; let go and it spins back to center.
 ##   Bottom-right: H-pattern shifter. Drag the knob through the gate.
 ##   No e-brake: flick the wheel or downshift while turning to kick the rear out.
 ##   Top-right:    ISO/3D camera toggle, RESET, then zoom out (-) and in (+).
@@ -25,7 +24,7 @@ const GHOST_STRONG := Color(1, 1, 1, 0.55)
 const FAINT := Color(1, 1, 1, 0.16)
 const ACCENT := Color(1.0, 0.55, 0.15, 0.85)
 
-const WHEEL_R := 205.0          ## only the top half shows: the hub sits on the bottom edge
+const WHEEL_R := 175.0
 const WHEEL_MAX := 720.0        ## degrees each way for full lock: two full turns, like a real car
 const WHEEL_RETURN := 1100.0    ## self-centering when you let go, degrees per second
 const UNIT := 92.0              ## shifter gate unit in pixels
@@ -71,7 +70,7 @@ func _ready() -> void:
 
 func _layout() -> void:
 	var s := get_viewport_rect().size
-	wheel_center = Vector2(40 + WHEEL_R, s.y + 8)
+	wheel_center = Vector2(60 + WHEEL_R, s.y - 50 - WHEEL_R)
 	shifter_center = Vector2(s.x - 60 - UNIT * 1.9, s.y - 60 - UNIT * 1.6)
 	reset_pos = Vector2(s.x - 70, 60)
 	view_pos = Vector2(s.x - 165, 60)
