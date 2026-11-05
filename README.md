@@ -40,7 +40,7 @@ Built in Godot 4.7.
 - **The gas is always on** whenever you're in gear.
 - **Slow down** by downshifting (engine braking) or knocking it into **neutral**.
 - **Drift:** there's no e-brake. Get going in 2nd and either **flick** the wheel quickly or **downshift while turning** (a clutch kick) to break the rear loose, then countersteer. Smooth steering stays planted. 2nd is the drift gear; once you're sliding you get full power to hold it.
-- **Forgiving by default:** the auto gas keeps the rear tires hooked up while you're just driving, and steering tightens up with speed, so the car only slides when you start a drift with the e-brake. Once you're sliding you get full power to hold it, a little countersteer assist, and past about 35° the car resists spinning out.
+- **Forgiving by default:** the auto gas keeps the rear tires hooked up while you're just driving, and steering tightens up with speed, so the car only slides when you kick it out. Once you're sliding you get full power to hold it, a little countersteer assist, and past about 35° the car resists spinning out.
 - **Engine: CHILL (default):** a rev limiter. It bounces off redline and crackles, but never blows. Tap **ENGINE** (top-left) to switch to **RISKY**: no limiter, a health bar, and sitting on the limiter (~25s) or a money shift (way past 9800 rpm) blows it. Your pick is remembered.
 - **Vibration:** gear changes buzz on the Thor and Android. On iPhone (iOS 18+) you get a haptic tick when your thumb lifts off the shifter; Safari doesn't allow anything better.
 
@@ -50,7 +50,7 @@ Everything is built in code from `scripts/main.gd`, no scene editing needed.
 
 | File | What it does |
 |---|---|
-| `scripts/car.gd` | Arcade drift physics: front and rear axle grip, friction circle, e-brake |
+| `scripts/car.gd` | Arcade drift physics: front and rear axle grip, friction circle, flick and downshift kicks |
 | `scripts/motor.gd` | Torque curve, redline, engine braking, blowing up |
 | `scripts/gearbox.gd` | 5-speed ratios |
 | `scripts/shifter_gate.gd` | H-pattern gate logic (knob always travels through neutral) |
