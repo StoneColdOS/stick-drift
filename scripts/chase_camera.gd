@@ -19,7 +19,7 @@ var zoom := 0.05                 ## base zoom when slow: 0 = close, 1 = far
 var look_ahead := 0.7             ## seconds of travel the camera leads by
 var max_lead := 0.32              ## at most this fraction of the visible height ahead of the car
 var speed_pull := 0.5             ## 3D view: extra zoom at full speed (0 turns the dynamic zoom off). ISO has its own in ISO
-var full_speed := 32.0            ## m/s where the speed pull maxes out (~72 mph)
+var full_speed := 22.0            ## m/s where the speed pull maxes out (~50 mph)
 var drift_pull := 0.15            ## extra zoom while drifting
 var follow_sharpness := 6.0
 var yaw_sharpness := 2.6

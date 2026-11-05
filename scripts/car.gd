@@ -16,8 +16,8 @@ var motor := Motor.new()
 
 # --- Drivetrain
 var wheel_radius := 0.3
-var final_drive := 4.3
-var torque_multiplier := 1.6      ## arcade boost; raise for more power oversteer
+var final_drive := 6.9            ## short gearing: ~22/38/55/72 mph in 1st-4th, chill neighbourhood speeds
+var torque_multiplier := 0.85     ## raise for more punch and power oversteer
 
 # --- Chassis (distances along the car's forward axis)
 var front_axle := 1.25
@@ -37,7 +37,7 @@ var handbrake_brake := 0.3
 var kick_time := 0.6              ## how long a flick or downshift kick loosens the rear
 var kick_hold := 0.3              ## full strength for this long, then it fades
 var flick_threshold := 0.12       ## how sudden a wheel move counts as a flick (share of full lock)
-var kick_min_speed := 6.0         ## m/s (~16 mph); below this nothing kicks
+var kick_min_speed := 4.5         ## m/s (~10 mph); below this nothing kicks
 var traction_control := 0.8       ## when not drifting, the auto gas only uses this share of rear grip. 0 = off
 var drift_latch_time := 1.0       ## after the e-brake, full power stays on this long (and while sliding)
 var base_angular_damp := 0.7
@@ -266,7 +266,7 @@ func _physics_process(dt: float) -> void:
 	# ---- Drift state
 	if speed > 3.0:
 		slip_angle = rad_to_deg(fwd.signed_angle_to(v, Vector3.UP))
-		drifting = vf > 0.0 and speed > 5.0 and absf(slip_angle) > 12.0
+		drifting = vf > 0.0 and speed > 4.0 and absf(slip_angle) > 12.0
 	else:
 		slip_angle = 0.0
 		drifting = false

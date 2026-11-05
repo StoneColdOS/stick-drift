@@ -34,7 +34,7 @@ var camera: Camera3D
 var touch: Control
 var hud: Control
 var environment: Environment
-var map_name := "tokyo"
+var map_name := "suburb"
 
 
 func _ready() -> void:
@@ -62,7 +62,7 @@ func _ready() -> void:
 
 	var settings := ConfigFile.new()
 	settings.load("user://settings.cfg")
-	map_name = settings.get_value("world", "map", "tokyo")
+	map_name = settings.get_value("world", "map", "suburb")
 	town = Tokyo.new() if map_name == "tokyo" else Neighborhood.new()
 	town.name = map_name.capitalize()
 	world.add_child(town)

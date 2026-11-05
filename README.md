@@ -2,7 +2,7 @@
 
 *Night drifting with a real stick.*
 
-A semi top-down, pixelated low-poly drift game. Night-time Tokyo streets (or a quiet suburb), neon and white LED street lights, an S13-style coupe, an on-screen steering wheel and a real H-pattern stick shift. The gas is always on, so shifting *is* the game: forget to shift and you'll blow the engine, downshift too hard and you'll blow it faster.
+A chill, semi top-down, pixelated low-poly drift game. A quiet night-time suburb (or Tokyo streets), white LED street lights, an S13-style coupe, an on-screen steering wheel and a real H-pattern stick shift. The gas is always on, so shifting *is* the game: forget to shift and you'll blow the engine, downshift too hard and you'll blow it faster.
 
 Built in Godot 4.7.
 
@@ -36,9 +36,9 @@ Built in Godot 4.7.
 | Camera | ISO / 3D button (top-right): flat isometric or perspective, both behind the car | V | Select |
 | Zoom | Automatic: close when slow, pulls out with speed and drifting. Pinch or − / + sets how close it sits when slow | - / = or mouse wheel | Y / X |
 | Reset | RESET (top-right) | Enter | Start |
-| Map | MAP: TOKYO / SUBURB (top-left), reloads the game | | |
+| Map | MAP: SUBURB / TOKYO (top-left), reloads the game | | |
 
-- **The gas is always on** whenever you're in gear.
+- **The gas is always on** whenever you're in gear. Short gears keep it chill: about 22 / 40 / 58 / 79 / 92 mph in 1st to 5th.
 - **Slow down** by downshifting (engine braking) or knocking it into **neutral**.
 - **Drift:** there's no e-brake. Get going in 2nd and either **flick** the wheel quickly or **downshift while turning** (a clutch kick) to break the rear loose, then countersteer. Smooth steering stays planted. 2nd is the drift gear; once you're sliding you get full power to hold it.
 - **Forgiving by default:** the auto gas keeps the rear tires hooked up while you're just driving, and steering tightens up with speed, so the car only slides when you kick it out. Once you're sliding you get full power to hold it, a little countersteer assist, and past about 35° the car resists spinning out.

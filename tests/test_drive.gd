@@ -77,7 +77,7 @@ func _run() -> void:
 			main.touch.snap_to_gear(car.gear + 1)
 	_check(car.gear == 4, "Shifted up to 4th")
 	_check(car.motor.health > 0.95, "Good shifting keeps the engine healthy (%.2f)" % car.motor.health)
-	_check(car.speed > 35.0, "Gets up to speed (%.0f mph)" % (car.speed * 2.237))
+	_check(car.speed > 24.0, "Gets up to speed (%.0f mph)" % (car.speed * 2.237))
 
 	# --- Normal steering at speed doesn't throw the car sideways
 	var planted := 0.0
@@ -92,6 +92,12 @@ func _run() -> void:
 	await _secs(1.0)
 
 	# --- Downshift to slow down (one gear) then money shift (way down)
+	# Coast down a bit first: just over 3rd's top speed (~58 mph), so the downshift engine-brakes.
+	main.touch.snap_to_gear(0)
+	while car.speed > 29.0:
+		await physics_frame
+	main.touch.snap_to_gear(4)
+	await _secs(0.3)
 	var before: float = car.speed
 	main.touch.snap_to_gear(3)
 	await _secs(1.0)
