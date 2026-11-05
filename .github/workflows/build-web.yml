@@ -54,6 +54,12 @@ jobs:
           godot --headless --export-release "Web" export/web/index.html
           ls -la export/web
           test -s export/web/index.wasm
+          # Godot's service worker waits for every tab to close before a new build takes over,
+          # which on iPhone means "never". Make each new build take over right away instead.
+          SW=export/web/index.service.worker.js
+          sed -i "s/self.addEventListener('install', (event) => {/self.addEventListener('install', (event) => {\n\tself.skipWaiting();/" $SW
+          sed -i "s/self.addEventListener('activate', (event) => {/self.addEventListener('activate', (event) => {\n\tevent.waitUntil(self.clients.claim());/" $SW
+          grep -q "skipWaiting();" $SW && grep -q "clients.claim()" $SW
 
       - uses: actions/configure-pages@v5
         with:
