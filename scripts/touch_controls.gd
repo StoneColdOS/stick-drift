@@ -3,7 +3,8 @@ extends Control
 ##   Bottom-left:  steering wheel. Put a thumb on it and twist; let go and it spins back to center.
 ##   Bottom-right: H-pattern shifter. Drag the knob through the gate.
 ##   Far right:    e-brake lever. Pull it down; it springs back up.
-##   Top-right:    RESET, then zoom out (-) and in (+). Pinch anywhere empty to zoom too.
+##   Top-right:    ISO/FOLLOW camera toggle, RESET, then zoom out (-) and in (+).
+##                 Pinch anywhere empty to zoom too.
 ##   Center (when the engine's blown): NEW ENGINE.
 ## Everything is semi-transparent white so the night scene shows through.
 
@@ -36,6 +37,7 @@ var shifter_center := Vector2.ZERO
 var lever_x := 0.0
 var lever_top := 0.0
 var reset_pos := Vector2.ZERO
+var view_pos := Vector2.ZERO
 var zoom_out_pos := Vector2.ZERO
 var zoom_in_pos := Vector2.ZERO
 var free_fingers := {}  ## fingers not on a control, for pinch zoom
@@ -73,6 +75,7 @@ func _layout() -> void:
 	lever_top = s.y - 80 - LEVER_TRAVEL - 60
 	shifter_center = Vector2(s.x - 210 - UNIT * 1.6, s.y - 60 - UNIT * 1.6)
 	reset_pos = Vector2(s.x - 70, 60)
+	view_pos = Vector2(s.x - 165, 60)
 	zoom_out_pos = Vector2(s.x - 70, 145)
 	zoom_in_pos = Vector2(s.x - 70, 220)
 	engine_btn = Rect2(s.x / 2 - 170, s.y / 2 + 40, 340, 80)
@@ -100,6 +103,10 @@ func _input(event: InputEvent) -> void:
 func _down(finger: int, pos: Vector2) -> void:
 	if car and car.motor.is_blown() and engine_btn.has_point(pos):
 		car.repair_engine()
+		return
+	if pos.distance_to(view_pos) < 40:
+		if camera:
+			camera.toggle_view()
 		return
 	if pos.distance_to(zoom_out_pos) < 38 or pos.distance_to(zoom_in_pos) < 38:
 		if camera:
@@ -243,7 +250,10 @@ func _draw() -> void:
 	draw_circle(reset_pos, 36, Color(1, 1, 1, 0.18))
 	draw_string(font, reset_pos + Vector2(-36, 7), "RESET", HORIZONTAL_ALIGNMENT_CENTER, 72, 18, Color.WHITE)
 
-	# Zoom
+	# View toggle + zoom
+	draw_circle(view_pos, 36, Color(1, 1, 1, 0.18))
+	var vname: String = camera.view_name() if camera else "VIEW"
+	draw_string(font, view_pos + Vector2(-36, 7), vname, HORIZONTAL_ALIGNMENT_CENTER, 72, 15, Color.WHITE)
 	for b in [[zoom_out_pos, "−"], [zoom_in_pos, "+"]]:
 		draw_circle(b[0], 30, Color(1, 1, 1, 0.18))
 		draw_string(font, b[0] + Vector2(-30, 12), b[1], HORIZONTAL_ALIGNMENT_CENTER, 60, 34, Color.WHITE)

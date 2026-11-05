@@ -33,6 +33,7 @@ Built in Godot 4.7.
 | Steer | Twist the wheel (bottom-left). Let go and it spins back to center | A / D or arrows | Left stick |
 | Shift | Drag the knob through the H gate (bottom-right) | 1-5, N or 0, R | R1 up / L1 down |
 | E-brake | Pull the lever down (far right) | Space | B or L2 |
+| Camera | ISO / FOLLOW button (top-right) toggles fixed isometric vs chase cam | V | Select |
 | Zoom | Pinch anywhere empty, or the − / + buttons (top-right) | - / = or mouse wheel | Y / X |
 | Reset | RESET (top-right) | Enter | Start |
 
@@ -57,7 +58,7 @@ Everything is built in code from `scripts/main.gd`, no scene editing needed.
 | `scripts/hud.gd` | Gear, tach, speed, engine health, drift points |
 | `scripts/neighborhood.gd` | The night suburb and street lights |
 | `scripts/car_model.gd` | Placeholder car, skid marks, smoke, brake lights |
-| `scripts/chase_camera.gd` | High chase camera with zoom (remembered between sessions) |
+| `scripts/chase_camera.gd` | Fixed isometric or high chase camera, with zoom (both remembered) |
 | `scripts/haptics.gd` | Vibration on gear changes |
 | `tests/test_drive.gd` | Automated test: launches, shifts, drifts, blows the engine |
 
