@@ -3,8 +3,9 @@ extends Node
 ## the touch controls and the HUD.
 ##
 ## Keyboard (for testing on the Mac): A/D or arrows steer, 1-5 gears, N or 0 neutral, R reverse,
-## Space e-brake, Enter reset. You can also click and drag the on-screen controls with the mouse.
-## Gamepad (Thor): left stick steers, R1/L1 shift up/down, B or L2 e-brake, Start resets.
+## Space e-brake, Enter reset, - and = zoom (or the mouse wheel). You can also drag the on-screen
+## controls with the mouse.
+## Gamepad (Thor): left stick steers, R1/L1 shift up/down, B or L2 e-brake, Y/X zoom, Start resets.
 
 const CarScript := preload("res://scripts/car.gd")
 const CarModel := preload("res://scripts/car_model.gd")
@@ -93,7 +94,7 @@ func _build_environment() -> void:
 	env.ambient_light_energy = 1.0
 	env.fog_enabled = true
 	env.fog_light_color = NIGHT_SKY
-	env.fog_density = 0.006
+	env.fog_density = 0.004
 	env.glow_enabled = true
 	env.glow_intensity = 0.7
 	env.glow_bloom = 0.05
@@ -126,14 +127,29 @@ func _process(_dt: float) -> void:
 		var i := SEQUENCE.find(input.gear)
 		i += 1 if Input.is_action_just_pressed("shift_up") else -1
 		touch.snap_to_gear(SEQUENCE[clampi(i, 0, SEQUENCE.size() - 1)])
-	if Input.is_action_just_pressed("camera"):
-		camera.cycle()
+	if Input.is_action_just_pressed("zoom_out"):
+		camera.zoom_by(0.15)
+		camera.save()
+	if Input.is_action_just_pressed("zoom_in"):
+		camera.zoom_by(-0.15)
+		camera.save()
 	if Input.is_action_just_pressed("reset"):
 		if car.motor.is_blown():
 			car.repair_engine()
 		else:
 			car.reset_to_spawn()
 			touch.snap_to_gear(0)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Mouse wheel zoom (for testing on the Mac).
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			camera.zoom_by(-0.05)
+			camera.save()
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			camera.zoom_by(0.05)
+			camera.save()
 
 
 func _setup_actions() -> void:
@@ -145,7 +161,8 @@ func _setup_actions() -> void:
 	_key("gear_n", [KEY_N, KEY_0])
 	_key("gear_r", [KEY_R])
 	_key("reset", [KEY_ENTER])
-	_key("camera", [KEY_C])
+	_key("zoom_out", [KEY_MINUS])
+	_key("zoom_in", [KEY_EQUAL])
 	_key("shift_up", [])
 	_key("shift_down", [])
 
@@ -156,7 +173,8 @@ func _setup_actions() -> void:
 	_button("shift_up", JOY_BUTTON_RIGHT_SHOULDER)
 	_button("shift_down", JOY_BUTTON_LEFT_SHOULDER)
 	_button("reset", JOY_BUTTON_START)
-	_button("camera", JOY_BUTTON_Y)
+	_button("zoom_out", JOY_BUTTON_Y)
+	_button("zoom_in", JOY_BUTTON_X)
 
 
 func _ensure(action: String) -> void:

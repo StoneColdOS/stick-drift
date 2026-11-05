@@ -3,7 +3,8 @@ extends Control
 ##   Bottom-left:  steering wheel. Put a thumb on it and twist; let go and it spins back to center.
 ##   Bottom-right: H-pattern shifter. Drag the knob through the gate.
 ##   Far right:    e-brake lever. Pull it down; it springs back up.
-##   Top-right:    RESET. Center (when the engine's blown): NEW ENGINE.
+##   Top-right:    RESET, then zoom out (-) and in (+). Pinch anywhere empty to zoom too.
+##   Center (when the engine's blown): NEW ENGINE.
 ## Everything is semi-transparent white so the night scene shows through.
 
 const Gate := preload("res://scripts/shifter_gate.gd")
@@ -35,7 +36,9 @@ var shifter_center := Vector2.ZERO
 var lever_x := 0.0
 var lever_top := 0.0
 var reset_pos := Vector2.ZERO
-var cam_pos := Vector2.ZERO
+var zoom_out_pos := Vector2.ZERO
+var zoom_in_pos := Vector2.ZERO
+var free_fingers := {}  ## fingers not on a control, for pinch zoom
 var engine_btn := Rect2()
 
 # Wheel
@@ -70,7 +73,8 @@ func _layout() -> void:
 	lever_top = s.y - 80 - LEVER_TRAVEL - 60
 	shifter_center = Vector2(s.x - 210 - UNIT * 1.6, s.y - 60 - UNIT * 1.6)
 	reset_pos = Vector2(s.x - 70, 60)
-	cam_pos = Vector2(s.x - 70, 150)
+	zoom_out_pos = Vector2(s.x - 70, 145)
+	zoom_in_pos = Vector2(s.x - 70, 220)
 	engine_btn = Rect2(s.x / 2 - 170, s.y / 2 + 40, 340, 80)
 	queue_redraw()
 
@@ -97,9 +101,10 @@ func _down(finger: int, pos: Vector2) -> void:
 	if car and car.motor.is_blown() and engine_btn.has_point(pos):
 		car.repair_engine()
 		return
-	if pos.distance_to(cam_pos) < 45:
+	if pos.distance_to(zoom_out_pos) < 38 or pos.distance_to(zoom_in_pos) < 38:
 		if camera:
-			camera.cycle()
+			camera.zoom_by(0.15 if pos.distance_to(zoom_out_pos) < 38 else -0.15)
+			camera.save()
 		return
 	if pos.distance_to(reset_pos) < 45:
 		if car:
@@ -121,6 +126,7 @@ func _down(finger: int, pos: Vector2) -> void:
 		knob_grab = knob - local
 		knob_target = knob
 		return
+	free_fingers[finger] = pos
 
 
 func _drag(finger: int, pos: Vector2) -> void:
@@ -133,9 +139,23 @@ func _drag(finger: int, pos: Vector2) -> void:
 		knob_target = Gate.project(_to_gate(pos) + knob_grab)
 	elif finger == lever_finger:
 		lever = clampf(lever_start + (pos.y - lever_start_y) / LEVER_TRAVEL, 0.0, 1.0)
+	elif free_fingers.has(finger):
+		if free_fingers.size() == 2 and camera:
+			var other: Vector2
+			for f in free_fingers:
+				if f != finger:
+					other = free_fingers[f]
+			var before := other.distance_to(free_fingers[finger])
+			var after := other.distance_to(pos)
+			camera.zoom_by((before - after) / 350.0)  # pinch in = zoom out, spread = zoom in
+		free_fingers[finger] = pos
 
 
 func _up(finger: int) -> void:
+	if free_fingers.has(finger):
+		free_fingers.erase(finger)
+		if camera:
+			camera.save()
 	if finger == wheel_finger:
 		wheel_finger = -1
 	elif finger == lever_finger:
@@ -223,10 +243,10 @@ func _draw() -> void:
 	draw_circle(reset_pos, 36, Color(1, 1, 1, 0.18))
 	draw_string(font, reset_pos + Vector2(-36, 7), "RESET", HORIZONTAL_ALIGNMENT_CENTER, 72, 18, Color.WHITE)
 
-	# Camera
-	draw_circle(cam_pos, 36, Color(1, 1, 1, 0.18))
-	var cam_label: String = camera.view_name() if camera else "CAM"
-	draw_string(font, cam_pos + Vector2(-36, 7), cam_label, HORIZONTAL_ALIGNMENT_CENTER, 72, 16, Color.WHITE)
+	# Zoom
+	for b in [[zoom_out_pos, "−"], [zoom_in_pos, "+"]]:
+		draw_circle(b[0], 30, Color(1, 1, 1, 0.18))
+		draw_string(font, b[0] + Vector2(-30, 12), b[1], HORIZONTAL_ALIGNMENT_CENTER, 60, 34, Color.WHITE)
 
 	# New engine button (only when blown; the HUD draws the panel behind it)
 	if car and car.motor.is_blown():

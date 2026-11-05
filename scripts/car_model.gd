@@ -64,7 +64,7 @@ func build(the_car) -> void:
 	beam.shadow_enabled = false
 	add_child(beam)
 
-	var smoke := Color(0.78, 0.78, 0.82, 0.3)
+	var smoke := Color(0.8, 0.8, 0.84, 0.35)
 	tire_smoke.append(_smoke(Vector3(-0.8, 0.3, -car.rear_axle), smoke, 2.2))
 	tire_smoke.append(_smoke(Vector3(0.8, 0.3, -car.rear_axle), smoke, 2.2))
 	engine_smoke = _smoke(Vector3(0, 1.0, -1.6), Color(0.22, 0.22, 0.24, 0.55), 1.6)
@@ -103,6 +103,7 @@ func _smoke(pos: Vector3, color: Color, size: float) -> CPUParticles3D:
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	m.billboard_keep_scale = true  # without this, idle particles render as full-size black quads
 	m.vertex_color_use_as_albedo = true
 	m.albedo_texture = Util.soft_circle()
 	quad.material = m
@@ -114,15 +115,18 @@ func _smoke(pos: Vector3, color: Color, size: float) -> CPUParticles3D:
 	p.initial_velocity_min = 0.3
 	p.initial_velocity_max = 1.2
 	p.gravity = Vector3(0, 0.3, 0)
-	p.scale_amount_min = 0.6
-	p.scale_amount_max = 1.0
+	p.scale_amount_min = 1.2
+	p.scale_amount_max = 2.0
 	var grow := Curve.new()
 	grow.add_point(Vector2(0, 0.5))
 	grow.add_point(Vector2(1, 1))
 	p.scale_amount_curve = grow
+	p.color = color
 	var fade := Gradient.new()
-	fade.set_color(0, color)
-	fade.set_color(1, Color(color.r, color.g, color.b, 0.0))
+	fade.set_offset(0, 0.0)
+	fade.set_offset(1, 1.0)
+	fade.set_color(0, Color(1, 1, 1, 1))
+	fade.set_color(1, Color(1, 1, 1, 0))
 	p.color_ramp = fade
 	return p
 
