@@ -45,7 +45,7 @@ func _draw() -> void:
 	var m = car.motor
 	var flash := fmod(Time.get_ticks_msec() / 1000.0 * 8.0, 1.0) > 0.5
 
-	draw_string(font, Vector2(40, s.y - 14), "build " + BUILD, HORIZONTAL_ALIGNMENT_LEFT, 200, 14, Color(1, 1, 1, 0.3))
+	draw_string(font, Vector2(s.x / 2 - 120, s.y - 14), "build %s · %d fps" % [BUILD, Engine.get_frames_per_second()], HORIZONTAL_ALIGNMENT_CENTER, 240, 14, Color(1, 1, 1, 0.35))
 
 	# Gear + speed
 	draw_string(font, Vector2(cx - 60, 105), Gearbox.label(car.gear), HORIZONTAL_ALIGNMENT_CENTER, 120, 96, WHITE)

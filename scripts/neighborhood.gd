@@ -9,7 +9,7 @@ const Util := preload("res://scripts/util.gd")
 const BLOCKS := 4
 const BLOCK := 46.0
 const ROAD := 16.0
-const LIGHT_RADIUS := 48.0
+const LIGHT_RADIUS := 36.0
 
 const LED_WHITE := Color(0.86, 0.92, 1.0)
 const ASPHALT := Color(0.16, 0.165, 0.19)

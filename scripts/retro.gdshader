@@ -1,21 +1,26 @@
 shader_type canvas_item;
-// Retro colour pass over the low-res world: a touch of ordered dithering and colour
-// quantization (like old consoles), plus a soft vignette. Subtle on purpose.
+// Retro colour pass over the low-res world: light ordered dithering and colour quantization
+// (like old consoles), plus a soft vignette. Kept subtle so motion stays smooth.
 
-uniform float levels = 28.0;     // colour steps per channel
-uniform float dither_amount = 1.0;
-uniform float vignette = 0.35;
+uniform float levels = 40.0;      // colour steps per channel
+uniform float dither_amount = 0.6;
+uniform float vignette = 0.3;
 
-const float BAYER[16] = float[](
-	0.0, 8.0, 2.0, 10.0,
-	12.0, 4.0, 14.0, 6.0,
-	3.0, 11.0, 1.0, 9.0,
-	15.0, 7.0, 13.0, 5.0);
+float bayer4(ivec2 p) {
+	// 4x4 Bayer matrix without array lookups (fast on phones).
+	int x = p.x & 3;
+	int y = p.y & 3;
+	int a = (x ^ y) & 1;
+	int b = (x & 1);
+	int c = ((x ^ y) >> 1) & 1;
+	int d = (x >> 1) & 1;
+	return float(a * 8 + b * 4 + c * 2 + d) / 16.0;
+}
 
 void fragment() {
 	vec4 c = texture(TEXTURE, UV);
 	ivec2 px = ivec2(UV / TEXTURE_PIXEL_SIZE);
-	float threshold = BAYER[(px.y % 4) * 4 + (px.x % 4)] / 16.0 - 0.5;
+	float threshold = bayer4(px) - 0.5;
 	vec3 col = c.rgb + threshold * dither_amount / levels;
 	col = floor(col * levels + 0.5) / levels;
 	vec2 d = UV - 0.5;

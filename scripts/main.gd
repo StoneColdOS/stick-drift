@@ -19,10 +19,13 @@ const Haptics := preload("res://scripts/haptics.gd")
 
 const NIGHT_SKY := Color(0.1, 0.12, 0.18)  ## also the fog colour, so the distance melts away
 const PIXEL_SHRINK := 2  ## 720 / 2 = 360 pixel-tall world. Lower = sharper, higher = chunkier.
+const MAX_SHRINK := 3    ## automatic quality can drop to this if the phone is struggling
 const SEQUENCE := [-1, 0, 1, 2, 3, 4, 5]  ## for gamepad up/down shifting
 
 var input := CarInput.new()
 var world_viewport: SubViewport
+var world_container: SubViewportContainer
+var _fps_low_time := 0.0
 var world: Node3D
 var town: Node3D
 var car: RigidBody3D
@@ -45,6 +48,7 @@ func _ready() -> void:
 	post.shader = load("res://scripts/retro.gdshader")
 	container.material = post
 	add_child(container)
+	world_container = container
 	world_viewport = SubViewport.new()
 	world_viewport.msaa_3d = Viewport.MSAA_DISABLED
 	container.add_child(world_viewport)
@@ -110,7 +114,7 @@ func _build_environment() -> void:
 	env.fog_depth_curve = 1.4
 	env.fog_depth_begin = 20.0
 	env.fog_depth_end = 70.0
-	env.glow_enabled = true
+	env.glow_enabled = false  # costs ~20% fps on phones; the additive light halos glow without it
 	env.glow_intensity = 0.7
 	env.glow_bloom = 0.05
 	env.glow_hdr_threshold = 1.0
@@ -127,7 +131,8 @@ func _build_environment() -> void:
 	world.add_child(moon)
 
 
-func _process(_dt: float) -> void:
+func _process(dt: float) -> void:
+	_auto_quality(dt)
 
 	var kb_steer := Input.get_axis("steer_left", "steer_right")
 	touch.kb_steer = kb_steer
@@ -170,6 +175,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			camera.zoom_by(0.05)
 			camera.save()
+
+
+## If the phone can't hold ~50 fps for a couple of seconds, render the world at a lower
+## resolution (chunkier pixels). Never goes back up mid-session, so it doesn't flicker.
+func _auto_quality(dt: float) -> void:
+	if world_container.stretch_shrink >= MAX_SHRINK or Time.get_ticks_msec() < 4000:
+		return
+	if Engine.get_frames_per_second() < 50:
+		_fps_low_time += dt
+		if _fps_low_time > 2.5:
+			world_container.stretch_shrink += 1
+			_fps_low_time = 0.0
+	else:
+		_fps_low_time = maxf(0.0, _fps_low_time - dt)
 
 
 func _setup_actions() -> void:

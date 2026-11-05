@@ -23,7 +23,7 @@ static func lit(c: Color, roughness := 0.85, grain_scale := 0.3) -> StandardMate
 			m.uv1_triplanar = true
 			m.uv1_world_triplanar = true
 			m.uv1_scale = Vector3.ONE * grain_scale
-			m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+			m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS  # nearest shimmered in motion
 		_mats[key] = m
 	return _mats[key]
 

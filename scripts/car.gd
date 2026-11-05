@@ -34,10 +34,10 @@ var rear_grip := 1.1
 var min_rear_lateral_share := 0.38## rear keeps this much side grip at full wheelspin, so drifts stay catchable
 var handbrake_grip_scale := 0.3
 var handbrake_brake := 0.3
-var kick_time := 0.45             ## how long a flick or downshift kick loosens the rear
+var kick_time := 0.6              ## how long a flick or downshift kick loosens the rear
 var kick_hold := 0.3              ## full strength for this long, then it fades
-var flick_threshold := 0.22       ## how sudden a wheel move counts as a flick (share of full lock)
-var kick_min_speed := 7.0         ## m/s (~16 mph); below this nothing kicks
+var flick_threshold := 0.12       ## how sudden a wheel move counts as a flick (share of full lock)
+var kick_min_speed := 6.0         ## m/s (~16 mph); below this nothing kicks
 var traction_control := 0.8       ## when not drifting, the auto gas only uses this share of rear grip. 0 = off
 var drift_latch_time := 1.0       ## after the e-brake, full power stays on this long (and while sliding)
 var base_angular_damp := 0.7
@@ -142,7 +142,9 @@ func _physics_process(dt: float) -> void:
 			kick()
 
 	# Flick: a sudden wheel move at speed kicks the rear out.
-	if absf(raw_steer - _steer_slow) > flick_threshold and speed > kick_min_speed:
+	# Only twists *away* from center count, so letting the wheel spin back doesn't kick.
+	var flick := raw_steer - _steer_slow
+	if absf(flick) > flick_threshold and signf(flick) == signf(raw_steer) and absf(raw_steer) > absf(_steer_slow) and speed > kick_min_speed:
 		kick()
 	_steer_slow = lerpf(_steer_slow, raw_steer, 1.0 - exp(-8.0 * dt))
 	_kick = maxf(0.0, _kick - dt)
