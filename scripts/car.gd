@@ -24,13 +24,16 @@ var front_axle := 1.25
 var rear_axle := -1.2
 var max_steer_angle := 42.0
 var steer_speed := 260.0          ## degrees per second the front wheels can turn
+var countersteer_assist := 0.3    ## 0 = off. Helps catch slides by adding some countersteer for you
 
 # --- Tires
 var front_grip := 1.2
 var rear_grip := 0.9
-var min_rear_lateral_share := 0.3 ## rear keeps this much side grip at full wheelspin, so drifts stay catchable
+var min_rear_lateral_share := 0.38## rear keeps this much side grip at full wheelspin, so drifts stay catchable
 var handbrake_grip_scale := 0.3
 var handbrake_brake := 0.3
+var base_angular_damp := 0.7
+var spin_guard := 0.8              ## past ~35° of slip the rear grips back up, up to this share. Lower = easier to spin
 
 # --- Resistance
 var rolling_resistance := 0.25    ## m/s^2
@@ -64,12 +67,12 @@ func _ready() -> void:
 	linear_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
 	linear_damp = 0.0
 	angular_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
-	angular_damp = 0.5
+	angular_damp = base_angular_damp
 	continuous_cd = true
 	can_sleep = false
 	var pm := PhysicsMaterial.new()
-	pm.friction = 0.1
-	pm.bounce = 0.15
+	pm.friction = 0.0  # scrape along walls instead of sticking
+	pm.bounce = 0.05
 	physics_material_override = pm
 
 	var shape := CollisionShape3D.new()
@@ -113,7 +116,10 @@ func _physics_process(dt: float) -> void:
 		gear = requested
 		gear_changed.emit(old, gear)
 
-	var target_steer: float = (input.steer if input else 0.0) * max_steer_angle
+	var steer_in: float = input.steer if input else 0.0
+	if absf(slip_angle) > 10.0:
+		steer_in = clampf(steer_in - countersteer_assist * clampf(slip_angle / 45.0, -1.0, 1.0), -1.0, 1.0)
+	var target_steer: float = steer_in * max_steer_angle
 	steer_angle = move_toward(steer_angle, target_steer, steer_speed * dt)
 
 	var fwd := forward()
@@ -174,7 +180,11 @@ func _physics_process(dt: float) -> void:
 		long_f = clampf(long_f - signf(r_long) * brake, -rear_max, rear_max)
 
 	var lat_avail := sqrt(maxf(0.0, rear_max * rear_max - long_f * long_f))
-	lat_avail = maxf(lat_avail, rear_max * min_rear_lateral_share)
+	var guard_t := clampf(inverse_lerp(35.0, 70.0, absf(slip_angle)), 0.0, 1.0)
+	var guard := lerpf(min_rear_lateral_share, maxf(spin_guard, min_rear_lateral_share), guard_t)
+	# Past ~35° the car also resists rotating further, so a big flick doesn't turn into a spin.
+	angular_damp = lerpf(base_angular_damp, base_angular_damp + spin_guard * 5.0, guard_t)
+	lat_avail = maxf(lat_avail, rear_max * guard)
 	var r_want := -r_lat * stiffness
 	var r_force := clampf(r_want, -lat_avail, lat_avail)
 	var sliding := absf(r_want) > lat_avail
@@ -195,9 +205,9 @@ func _physics_process(dt: float) -> void:
 		apply_central_force(-dir * resist)
 
 	# ---- Drift state
-	if speed > 3.0 and vf > 0.0:
+	if speed > 3.0:
 		slip_angle = rad_to_deg(fwd.signed_angle_to(v, Vector3.UP))
-		drifting = speed > 5.0 and absf(slip_angle) > 12.0
+		drifting = vf > 0.0 and speed > 5.0 and absf(slip_angle) > 12.0
 	else:
 		slip_angle = 0.0
 		drifting = false

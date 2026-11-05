@@ -8,6 +8,7 @@ extends Control
 
 const Gate := preload("res://scripts/shifter_gate.gd")
 const Gearbox := preload("res://scripts/gearbox.gd")
+const Haptics := preload("res://scripts/haptics.gd")
 
 const GHOST := Color(1, 1, 1, 0.38)
 const GHOST_STRONG := Color(1, 1, 1, 0.55)
@@ -15,7 +16,7 @@ const FAINT := Color(1, 1, 1, 0.16)
 const ACCENT := Color(1.0, 0.55, 0.15, 0.85)
 
 const WHEEL_R := 175.0
-const WHEEL_MAX := 150.0        ## degrees each way for full lock
+const WHEEL_MAX := 120.0        ## degrees each way for full lock
 const WHEEL_RETURN := 600.0     ## self-centering, degrees per second
 const UNIT := 92.0              ## shifter gate unit in pixels
 const KNOB_FOLLOW := 30.0       ## gate units per second while dragging
@@ -24,6 +25,7 @@ const LEVER_TRAVEL := 230.0
 
 var input   ## car_input.gd
 var car     ## car.gd
+var camera  ## chase_camera.gd
 var kb_steer := 0.0      ## keyboard / gamepad, set by main.gd each frame
 var kb_handbrake := 0.0
 
@@ -33,6 +35,7 @@ var shifter_center := Vector2.ZERO
 var lever_x := 0.0
 var lever_top := 0.0
 var reset_pos := Vector2.ZERO
+var cam_pos := Vector2.ZERO
 var engine_btn := Rect2()
 
 # Wheel
@@ -67,6 +70,7 @@ func _layout() -> void:
 	lever_top = s.y - 80 - LEVER_TRAVEL - 60
 	shifter_center = Vector2(s.x - 210 - UNIT * 1.6, s.y - 60 - UNIT * 1.6)
 	reset_pos = Vector2(s.x - 70, 60)
+	cam_pos = Vector2(s.x - 70, 150)
 	engine_btn = Rect2(s.x / 2 - 170, s.y / 2 + 40, 340, 80)
 	queue_redraw()
 
@@ -92,6 +96,10 @@ func _input(event: InputEvent) -> void:
 func _down(finger: int, pos: Vector2) -> void:
 	if car and car.motor.is_blown() and engine_btn.has_point(pos):
 		car.repair_engine()
+		return
+	if pos.distance_to(cam_pos) < 45:
+		if camera:
+			camera.cycle()
 		return
 	if pos.distance_to(reset_pos) < 45:
 		if car:
@@ -157,8 +165,12 @@ func _process(dt: float) -> void:
 
 
 func _apply_gear() -> void:
-	if input:
-		input.gear = Gate.gear_at(knob)
+	if input == null:
+		return
+	var g := Gate.gear_at(knob)
+	if g != input.gear and g != 0:
+		Haptics.buzz()
+	input.gear = g
 
 
 func _to_gate(pos: Vector2) -> Vector2:
@@ -210,6 +222,11 @@ func _draw() -> void:
 	# Reset
 	draw_circle(reset_pos, 36, Color(1, 1, 1, 0.18))
 	draw_string(font, reset_pos + Vector2(-36, 7), "RESET", HORIZONTAL_ALIGNMENT_CENTER, 72, 18, Color.WHITE)
+
+	# Camera
+	draw_circle(cam_pos, 36, Color(1, 1, 1, 0.18))
+	var cam_label: String = camera.view_name() if camera else "CAM"
+	draw_string(font, cam_pos + Vector2(-36, 7), cam_label, HORIZONTAL_ALIGNMENT_CENTER, 72, 16, Color.WHITE)
 
 	# New engine button (only when blown; the HUD draws the panel behind it)
 	if car and car.motor.is_blown():

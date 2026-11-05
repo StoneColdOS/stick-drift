@@ -21,9 +21,9 @@ var idle_rpm := 900.0
 var redline_rpm := 7600.0        ## tach turns red, SHIFT! warning
 var peak_torque := 150.0
 var damage_rpm := 7900.0         ## above this the engine slowly wears (sitting on the limiter)
-var sustained_damage := 0.6      ## health per second, per 1000 rpm over damage_rpm
-var money_shift_rpm := 9400.0    ## above this you've money-shifted
-var money_shift_damage := 2.5    ## extra health per second, per 1000 rpm over money_shift_rpm
+var sustained_damage := 0.2      ## health per second, per 1000 rpm over damage_rpm
+var money_shift_rpm := 9800.0    ## above this you've money-shifted
+var money_shift_damage := 1.5    ## extra health per second, per 1000 rpm over money_shift_rpm
 
 var rpm := 900.0
 var health := 1.0

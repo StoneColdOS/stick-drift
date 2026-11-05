@@ -13,6 +13,7 @@ const Neighborhood := preload("res://scripts/neighborhood.gd")
 const ChaseCamera := preload("res://scripts/chase_camera.gd")
 const TouchControls := preload("res://scripts/touch_controls.gd")
 const Hud := preload("res://scripts/hud.gd")
+const Haptics := preload("res://scripts/haptics.gd")
 
 const NIGHT_SKY := Color(0.035, 0.045, 0.08)
 const PIXEL_SHRINK := 3  ## 720 / 3 = 240 pixel-tall world. Lower = sharper, higher = chunkier.
@@ -56,6 +57,7 @@ func _ready() -> void:
 	car.name = "Car"
 	car.input = input
 	world.add_child(car)
+	car.engine_blown.connect(func(): Haptics.buzz(300))
 	car.global_transform = town.spawn
 	car._spawn = town.spawn
 	var model := CarModel.new()
@@ -78,6 +80,7 @@ func _ready() -> void:
 	touch = TouchControls.new()
 	touch.input = input
 	touch.car = car
+	touch.camera = camera
 	ui.add_child(touch)
 
 
@@ -123,6 +126,8 @@ func _process(_dt: float) -> void:
 		var i := SEQUENCE.find(input.gear)
 		i += 1 if Input.is_action_just_pressed("shift_up") else -1
 		touch.snap_to_gear(SEQUENCE[clampi(i, 0, SEQUENCE.size() - 1)])
+	if Input.is_action_just_pressed("camera"):
+		camera.cycle()
 	if Input.is_action_just_pressed("reset"):
 		if car.motor.is_blown():
 			car.repair_engine()
@@ -140,6 +145,7 @@ func _setup_actions() -> void:
 	_key("gear_n", [KEY_N, KEY_0])
 	_key("gear_r", [KEY_R])
 	_key("reset", [KEY_ENTER])
+	_key("camera", [KEY_C])
 	_key("shift_up", [])
 	_key("shift_down", [])
 
@@ -150,6 +156,7 @@ func _setup_actions() -> void:
 	_button("shift_up", JOY_BUTTON_RIGHT_SHOULDER)
 	_button("shift_down", JOY_BUTTON_LEFT_SHOULDER)
 	_button("reset", JOY_BUTTON_START)
+	_button("camera", JOY_BUTTON_Y)
 
 
 func _ensure(action: String) -> void:

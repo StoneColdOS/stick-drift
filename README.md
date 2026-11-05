@@ -12,6 +12,8 @@ Built in Godot 4.7.
 
 **On your iPhone (or any phone):** open [stonecoldos.github.io/stick-drift](https://stonecoldos.github.io/stick-drift/) in Safari and turn the phone sideways. Every push to `main` rebuilds it (give it a couple of minutes, then refresh).
 
+**Full screen on iPhone:** Safari won't let a web page hide its address bar, so add it to your home screen once: in Safari tap **Share > Add to Home Screen**, then launch it from the icon. It opens full screen with no address bar.
+
 **On the Thor:** every push also builds an APK. Open the [latest build](https://github.com/StoneColdOS/stick-drift/releases/tag/latest-build), download `stick-drift.apk` and install it over the old one.
 
 **On your Mac:** install [Godot 4.7](https://godotengine.org/download), click **Import**, pick `project.godot` in this folder, then press **F5**. You can drag the on-screen controls with the mouse.
@@ -31,12 +33,15 @@ Built in Godot 4.7.
 | Steer | Twist the wheel (bottom-left). Let go and it spins back to center | A / D or arrows | Left stick |
 | Shift | Drag the knob through the H gate (bottom-right) | 1-5, N or 0, R | R1 up / L1 down |
 | E-brake | Pull the lever down (far right) | Space | B or L2 |
+| Camera angle | CHASE / HIGH / TOP button (top-right) | C | Y |
 | Reset | RESET (top-right) | Enter | Start |
 
 - **The gas is always on** whenever you're in gear.
 - **Slow down** by downshifting (engine braking) or knocking it into **neutral**.
 - **Drift:** get going in 2nd, flick the wheel and tug the e-brake, then countersteer. 2nd is the drift gear; it has just enough power to keep the rear sliding.
-- **Engine damage:** sitting on the limiter (~7900+ rpm) wears it down, and a money shift (way past 9400 rpm) kills it almost instantly. Watch for **SHIFT!**
+- **Forgiving by default:** a little countersteer assist, and past about 35° of slide the car resists spinning out, so letting go of the wheel usually saves it.
+- **Engine damage:** sitting on the limiter (~7900+ rpm) wears it down over about 25 seconds, and a money shift (way past 9800 rpm) kills it fast. Watch for **SHIFT!**
+- **Vibration:** gear changes buzz on the Thor and Android. On iPhone (iOS 18+) you get a haptic tick when your thumb lifts off the shifter; Safari doesn't allow anything better.
 
 ## How it's built
 
@@ -52,7 +57,8 @@ Everything is built in code from `scripts/main.gd`, no scene editing needed.
 | `scripts/hud.gd` | Gear, tach, speed, engine health, drift points |
 | `scripts/neighborhood.gd` | The night suburb and street lights |
 | `scripts/car_model.gd` | Placeholder car, skid marks, smoke, brake lights |
-| `scripts/chase_camera.gd` | Semi top-down camera that follows where you're sliding |
+| `scripts/chase_camera.gd` | Chase / high / top-down camera that follows where you're sliding |
+| `scripts/haptics.gd` | Vibration on gear changes |
 | `tests/test_drive.gd` | Automated test: launches, shifts, drifts, blows the engine |
 
 Run the test: `godot --headless --fixed-fps 120 --path . -s res://tests/test_drive.gd`. The web build only publishes if it passes.
@@ -62,7 +68,8 @@ Run the test: `godot --headless --fixed-fps 120 --path . -s res://tests/test_dri
 In `scripts/car.gd`:
 
 - More slide: lower `rear_grip`, raise `torque_multiplier`
-- Easier to catch a drift: raise `min_rear_lateral_share` or `max_steer_angle`
+- Easier to catch a drift: raise `countersteer_assist`, `spin_guard` or `min_rear_lateral_share`
+- Harder / more raw: set `countersteer_assist` and `spin_guard` to 0
 - E-brake: `handbrake_grip_scale` (lower = looser rear), `handbrake_brake` (higher = scrubs more speed)
 
 In `scripts/motor.gd`: `damage_rpm`, `sustained_damage`, `money_shift_rpm`.
@@ -72,4 +79,3 @@ Pixel size: `PIXEL_SHRINK` in `scripts/main.gd` (higher = chunkier).
 
 - Engine and tire audio (rpm-pitched loop + screech)
 - A proper low-poly coupe to replace the box car
-- Haptics on gear changes and when the engine blows

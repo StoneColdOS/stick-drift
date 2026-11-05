@@ -91,12 +91,12 @@ func _run() -> void:
 	var drift_time := 0.0
 	Input.action_press("steer_right")
 	Input.action_press("ebrake")
-	for i in 50:
+	for i in 80:
 		await physics_frame
 	Input.action_release("ebrake")
 	for i in 360:  # simple countersteer: steer against the slide
 		await physics_frame
-		var want := clampf(-car.slip_angle / 45.0, -1.0, 1.0) if i > 15 else 1.0
+		var want := clampf(-car.slip_angle / 70.0, -1.0, 1.0) if i > 15 else 1.0
 		Input.action_release("steer_left")
 		Input.action_release("steer_right")
 		if want > 0.0:
@@ -109,6 +109,22 @@ func _run() -> void:
 	Input.action_release("steer_left")
 	Input.action_release("steer_right")
 	drifted = drift_time > 1.5
+	# Let go of the wheel mid-slide: the assist and spin guard should save it.
+	main.touch.snap_to_gear(0)
+	car.reset_to_spawn()
+	await _secs(0.5)
+	main.touch.snap_to_gear(2)
+	await _secs(2.5)
+	Input.action_press("steer_right")
+	Input.action_press("ebrake")
+	await _secs(0.6)
+	Input.action_release("ebrake")
+	Input.action_release("steer_right")
+	var worst := 0.0
+	for i in 360:
+		await physics_frame
+		worst = maxf(worst, absf(car.slip_angle))
+	_check(worst < 80.0, "Letting go of the wheel mid-drift doesn't spin you out (max %.0f°)" % worst)
 	_check(drifted, "E-brake + countersteer holds a drift (%.1fs, max %.0f°)" % [drift_time, max_slip])
 	await _secs(0.5)
 	_check(main.hud.drift_points > 0.0 or main.hud.best > 0.0, "Drifting scores points")
