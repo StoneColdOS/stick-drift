@@ -55,6 +55,8 @@ Everything is built in code from `scripts/main.gd`, no scene editing needed.
 | `scripts/gearbox.gd` | 5-speed ratios |
 | `scripts/shifter_gate.gd` | H-pattern gate logic (knob always travels through neutral) |
 | `scripts/touch_controls.gd` | Wheel, shifter, buttons |
+| `tools/make_controls_art.py` | Paints the realistic wheel, knob and gate in `art/` (Python + Pillow + numpy) |
+| `scripts/retro.gdshader` | Dither / colour quantization / vignette over the world |
 | `scripts/hud.gd` | Gear, tach, speed, engine health, drift points |
 | `scripts/neighborhood.gd` | The night suburb and street lights |
 | `scripts/car_model.gd` | Placeholder car, headlight/tail light glow, exhaust and backfires, skid marks, smoke |

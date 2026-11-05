@@ -12,6 +12,12 @@ const Gate := preload("res://scripts/shifter_gate.gd")
 const Gearbox := preload("res://scripts/gearbox.gd")
 const Haptics := preload("res://scripts/haptics.gd")
 const SETTINGS := "user://settings.cfg"
+## Painted, realistic-looking parts (see tools/make_controls_art.py) on top of the pixel world.
+const WHEEL_TEX := preload("res://art/wheel.png")
+const GATE_TEX := preload("res://art/gate.png")
+const KNOB_TEX := preload("res://art/knob.png")
+const WHEEL_ART_RIM := 0.44  ## rim radius as a fraction of the wheel image
+const GATE_ART_UNITS := 3.8  ## gate image width in gate units
 
 const GHOST := Color(1, 1, 1, 0.38)
 const GHOST_STRONG := Color(1, 1, 1, 0.55)
@@ -209,12 +215,9 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 
 	# Steering wheel
+	var half := WHEEL_R / (WHEEL_ART_RIM * 2.0)
 	draw_set_transform(wheel_center, deg_to_rad(wheel_angle), Vector2.ONE)
-	for a in [0.0, PI, PI / 2]:
-		draw_line(Vector2.ZERO, Vector2(cos(a), sin(a)) * (WHEEL_R - 25), FAINT, 26.0)
-	draw_circle(Vector2.ZERO, 48, FAINT)
-	draw_arc(Vector2.ZERO, WHEEL_R - 16, 0, TAU, 72, GHOST, 32.0, true)
-	draw_rect(Rect2(-10, -WHEEL_R - 2, 20, 36), ACCENT)
+	draw_texture_rect(WHEEL_TEX, Rect2(-half, -half, half * 2.0, half * 2.0), false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# Lock gauge: the wheel looks the same after a full spin, so an arc around the rim shows
 	# how far you're turned. Half the rim = full lock.
@@ -224,17 +227,11 @@ func _draw() -> void:
 		draw_arc(wheel_center, WHEEL_R + 14, start, start + frac * PI, 48, ACCENT, 8.0, true)
 
 	# Shifter gate
-	draw_rect(Rect2(shifter_center - Vector2(UNIT * 1.9, UNIT * 1.9), Vector2(UNIT * 3.8, UNIT * 3.8)), Color(1, 1, 1, 0.05))
-	draw_line(_gate_to_screen(Vector2(-1, 0)), _gate_to_screen(Vector2(1, 0)), FAINT, 14.0)
-	for c in [-1, 0, 1]:
-		draw_line(_gate_to_screen(Vector2(c, -1)), _gate_to_screen(Vector2(c, 1)), FAINT, 14.0)
-	for g in [1, 2, 3, 4, 5, Gate.REVERSE]:
-		var slot := Gate.slot_for(g)
-		var p := _gate_to_screen(slot) + Vector2(-15, -40 if slot.y > 0 else 60)
-		draw_string(font, p, Gearbox.label(g), HORIZONTAL_ALIGNMENT_CENTER, 30, 30, GHOST)
+	var gs := UNIT * GATE_ART_UNITS
+	draw_texture_rect(GATE_TEX, Rect2(shifter_center - Vector2(gs, gs) / 2.0, Vector2(gs, gs)), false)
 	var kp := _gate_to_screen(knob)
-	draw_circle(kp, 50, GHOST_STRONG)
-	draw_arc(kp, 34, 0, TAU, 40, ACCENT, 4.0, true)
+	var ks := 128.0
+	draw_texture_rect(KNOB_TEX, Rect2(kp - Vector2(ks, ks) / 2.0, Vector2(ks, ks)), false)
 
 	# Reset
 	draw_circle(reset_pos, 36, Color(1, 1, 1, 0.18))
