@@ -64,13 +64,14 @@ func _draw() -> void:
 	draw_string(font, tach.position + Vector2(0, 44), "%d RPM" % roundi(m.rpm), HORIZONTAL_ALIGNMENT_CENTER, TACH_W, 20, DIM)
 
 	# Engine health (top left)
-	draw_string(font, Vector2(40, 42), "ENGINE", HORIZONTAL_ALIGNMENT_LEFT, 200, 20, DIM)
-	draw_rect(Rect2(40, 52, 200, 10), Color(0, 0, 0, 0.4))
-	var hc := Color(0.55, 1.0, 0.6, 0.85).lerp(HOT, 1.0 - m.health)
-	draw_rect(Rect2(40, 52, 200 * m.health, 10), hc)
+	# The CHILL / RISKY toggle is drawn by the touch controls; the health bar only matters in risky.
+	if m.damage_enabled:
+		draw_rect(Rect2(40, 82, 200, 10), Color(0, 0, 0, 0.4))
+		var hc := Color(0.55, 1.0, 0.6, 0.85).lerp(HOT, 1.0 - m.health)
+		draw_rect(Rect2(40, 82, 200 * m.health, 10), hc)
 
 	# Warnings
-	if not m.is_blown():
+	if m.damage_enabled and not m.is_blown():
 		var warn := ""
 		if m.rpm > m.money_shift_rpm:
 			warn = "MONEY SHIFT!"

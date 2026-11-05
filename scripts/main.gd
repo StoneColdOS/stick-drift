@@ -18,7 +18,7 @@ const Hud := preload("res://scripts/hud.gd")
 const Haptics := preload("res://scripts/haptics.gd")
 
 const NIGHT_SKY := Color(0.035, 0.045, 0.08)
-const PIXEL_SHRINK := 3  ## 720 / 3 = 240 pixel-tall world. Lower = sharper, higher = chunkier.
+const PIXEL_SHRINK := 2  ## 720 / 2 = 360 pixel-tall world. Lower = sharper, higher = chunkier.
 const SEQUENCE := [-1, 0, 1, 2, 3, 4, 5]  ## for gamepad up/down shifting
 
 var input := CarInput.new()
@@ -60,6 +60,9 @@ func _ready() -> void:
 	car.input = input
 	world.add_child(car)
 	car.engine_blown.connect(func(): Haptics.buzz(300))
+	var settings := ConfigFile.new()
+	if settings.load("user://settings.cfg") == OK:
+		car.motor.damage_enabled = settings.get_value("engine", "risky", false)
 	car.global_transform = town.spawn
 	car._spawn = town.spawn
 	var model := CarModel.new()

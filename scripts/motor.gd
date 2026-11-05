@@ -25,6 +25,9 @@ var sustained_damage := 0.2      ## health per second, per 1000 rpm over damage_
 var money_shift_rpm := 9800.0    ## above this you've money-shifted
 var money_shift_damage := 1.5    ## extra health per second, per 1000 rpm over money_shift_rpm
 
+var damage_enabled := false     ## off = chill mode: rev limiter, the engine never blows
+var limiter_rpm := 7900.0        ## chill mode cuts power here and bounces off it
+
 var rpm := 900.0
 var health := 1.0
 
@@ -58,12 +61,19 @@ func tick(target_rpm: float, engaged: bool, dt: float) -> void:
 	else:
 		rpm = move_toward(rpm, idle_rpm, 5000.0 * dt)
 
+	if not damage_enabled:
+		return
 	var damage := 0.0
 	if rpm > damage_rpm:
 		damage += sustained_damage * (rpm - damage_rpm) / 1000.0 * dt
 	if rpm > money_shift_rpm:
 		damage += money_shift_damage * (rpm - money_shift_rpm) / 1000.0 * dt
 	health = maxf(0.0, health - damage)
+
+
+## Chill mode: is the limiter cutting power right now?
+func limiting() -> bool:
+	return not damage_enabled and rpm > limiter_rpm
 
 
 func repair() -> void:

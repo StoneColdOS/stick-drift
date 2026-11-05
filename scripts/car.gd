@@ -166,6 +166,8 @@ func _physics_process(dt: float) -> void:
 			drive = -signf(vf) * rear_max * 0.9  # e.g. slammed into R while rolling forward
 		else:
 			drive = motor.torque_at(motor.rpm) * torque_multiplier * ratio / wheel_radius
+			if motor.limiting() and drive * signf(ratio) > 0.0:
+				drive = 0.0  # chill mode rev limiter: cut the power, bounce off redline
 		drive *= lerpf(1.0, 0.6, hb)
 
 	# Stiffness that cancels sideways speed in about two physics steps.

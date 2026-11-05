@@ -11,6 +11,7 @@ extends Control
 const Gate := preload("res://scripts/shifter_gate.gd")
 const Gearbox := preload("res://scripts/gearbox.gd")
 const Haptics := preload("res://scripts/haptics.gd")
+const SETTINGS := "user://settings.cfg"
 
 const GHOST := Color(1, 1, 1, 0.38)
 const GHOST_STRONG := Color(1, 1, 1, 0.55)
@@ -37,6 +38,7 @@ var shifter_center := Vector2.ZERO
 var lever_x := 0.0
 var lever_top := 0.0
 var reset_pos := Vector2.ZERO
+var mode_btn := Rect2(30, 24, 170, 46)  ## CHILL / RISKY engine toggle
 var view_pos := Vector2.ZERO
 var zoom_out_pos := Vector2.ZERO
 var zoom_in_pos := Vector2.ZERO
@@ -103,6 +105,15 @@ func _input(event: InputEvent) -> void:
 func _down(finger: int, pos: Vector2) -> void:
 	if car and car.motor.is_blown() and engine_btn.has_point(pos):
 		car.repair_engine()
+		return
+	if mode_btn.grow(10).has_point(pos):
+		if car:
+			car.motor.damage_enabled = not car.motor.damage_enabled
+			car.repair_engine()
+			var cfg := ConfigFile.new()
+			cfg.load(SETTINGS)
+			cfg.set_value("engine", "risky", car.motor.damage_enabled)
+			cfg.save(SETTINGS)
 		return
 	if pos.distance_to(view_pos) < 40:
 		if camera:
@@ -255,6 +266,12 @@ func _draw() -> void:
 	# Reset
 	draw_circle(reset_pos, 36, Color(1, 1, 1, 0.18))
 	draw_string(font, reset_pos + Vector2(-36, 7), "RESET", HORIZONTAL_ALIGNMENT_CENTER, 72, 18, Color.WHITE)
+
+	# Engine mode toggle (top-left)
+	if car:
+		var risky: bool = car.motor.damage_enabled
+		draw_rect(mode_btn, Color(1, 0.3, 0.2, 0.3) if risky else Color(0.5, 0.9, 1.0, 0.18))
+		draw_string(font, mode_btn.position + Vector2(0, 31), "ENGINE: RISKY" if risky else "ENGINE: CHILL", HORIZONTAL_ALIGNMENT_CENTER, mode_btn.size.x, 18, Color.WHITE)
 
 	# View toggle + zoom
 	draw_circle(view_pos, 36, Color(1, 1, 1, 0.18))

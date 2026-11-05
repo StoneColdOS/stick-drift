@@ -41,7 +41,7 @@ Built in Godot 4.7.
 - **Slow down** by downshifting (engine braking) or knocking it into **neutral**.
 - **Drift:** get going in 2nd, flick the wheel and tug the e-brake, then countersteer. 2nd is the drift gear; it has just enough power to keep the rear sliding.
 - **Forgiving by default:** the auto gas keeps the rear tires hooked up while you're just driving, and steering tightens up with speed, so the car only slides when you start a drift with the e-brake. Once you're sliding you get full power to hold it, a little countersteer assist, and past about 35° the car resists spinning out.
-- **Engine damage:** sitting on the limiter (~7900+ rpm) wears it down over about 25 seconds, and a money shift (way past 9800 rpm) kills it fast. Watch for **SHIFT!**
+- **Engine: CHILL (default):** a rev limiter. It bounces off redline and crackles, but never blows. Tap **ENGINE** (top-left) to switch to **RISKY**: no limiter, a health bar, and sitting on the limiter (~25s) or a money shift (way past 9800 rpm) blows it. Your pick is remembered.
 - **Vibration:** gear changes buzz on the Thor and Android. On iPhone (iOS 18+) you get a haptic tick when your thumb lifts off the shifter; Safari doesn't allow anything better.
 
 ## How it's built
@@ -75,7 +75,7 @@ In `scripts/car.gd`:
 - E-brake: `handbrake_grip_scale` (lower = looser rear), `handbrake_brake` (higher = scrubs more speed)
 
 In `scripts/motor.gd`: `damage_rpm`, `sustained_damage`, `money_shift_rpm`.
-Pixel size: `PIXEL_SHRINK` in `scripts/main.gd` (higher = chunkier).
+Pixel size: `PIXEL_SHRINK` in `scripts/main.gd` (2 = 360 px tall world; higher = chunkier).
 
 ## Next up
 

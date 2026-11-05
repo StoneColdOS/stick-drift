@@ -44,7 +44,17 @@ func _run() -> void:
 	_check(car.gear == 1, "In 1st")
 	_check(car.speed > 6.0, "Auto throttle pulls in 1st (%.1f m/s)" % car.speed)
 
-	# --- Stay in 1st: should blow up
+	# --- Chill mode (default): bounce off the limiter, never blow up
+	_check(not car.motor.damage_enabled, "Starts in chill mode")
+	var top_rpm := 0.0
+	for i in 20:
+		await _secs(0.5)
+		top_rpm = maxf(top_rpm, car.motor.rpm)
+	_check(not car.motor.is_blown() and car.motor.health == 1.0, "Chill: 10s on the limiter, engine untouched")
+	_check(top_rpm < 8400.0, "Chill: rev limiter holds it near redline (peak %d rpm)" % top_rpm)
+
+	# --- Risky mode: stay in 1st and it blows
+	car.motor.damage_enabled = true
 	var t := 0.0
 	while not car.motor.is_blown() and t < 30.0:
 		await _secs(0.5)
