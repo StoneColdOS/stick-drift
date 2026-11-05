@@ -57,7 +57,7 @@ Everything is built in code from `scripts/main.gd`, no scene editing needed.
 | `scripts/touch_controls.gd` | Wheel, shifter, e-brake lever, buttons |
 | `scripts/hud.gd` | Gear, tach, speed, engine health, drift points |
 | `scripts/neighborhood.gd` | The night suburb and street lights |
-| `scripts/car_model.gd` | Placeholder car, skid marks, smoke, brake lights |
+| `scripts/car_model.gd` | Placeholder car, headlight/tail light glow, exhaust and backfires, skid marks, smoke |
 | `scripts/chase_camera.gd` | Isometric or perspective chase camera, with zoom (both remembered) |
 | `scripts/haptics.gd` | Vibration on gear changes |
 | `tests/test_drive.gd` | Automated test: launches, shifts, drifts, blows the engine |

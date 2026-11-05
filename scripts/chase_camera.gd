@@ -15,8 +15,8 @@ const FOLLOW := {"pitch_close": 44.0, "pitch_far": 68.0, "dist_close": 13.0, "di
 var car  ## car.gd
 var iso := true
 var zoom := 0.05                 ## base zoom when slow: 0 = close, 1 = far
-var look_ahead := 0.35
-var max_look_ahead := 9.0
+var look_ahead := 0.7             ## seconds of travel the camera leads by
+var max_lead := 0.32              ## at most this fraction of the visible height ahead of the car
 var speed_pull := 0.5             ## 3D view: extra zoom at full speed (0 turns the dynamic zoom off). ISO has its own in ISO
 var full_speed := 32.0            ## m/s where the speed pull maxes out (~72 mph)
 var drift_pull := 0.15            ## extra zoom while drifting
@@ -95,7 +95,10 @@ func _process(dt: float) -> void:
 	var rate := 1.8 if dyn_target > _dyn else 0.7
 	_dyn = lerpf(_dyn, dyn_target, 1.0 - exp(-rate * dt))
 
-	var ahead := (v * look_ahead).limit_length(max_look_ahead)
+	# Lead the car so most of the screen is road coming at you (more reaction time).
+	# The car sits toward the bottom of the screen, more so the faster you go.
+	var view_height: float = size if iso else lerpf(FOLLOW.dist_close, FOLLOW.dist_far, clampf(_zoom_smooth + _dyn, 0.0, 1.0)) * 0.75
+	var ahead := (v * look_ahead).limit_length(view_height * max_lead)
 	_focus = _focus.lerp(car.global_position + ahead, 1.0 - exp(-follow_sharpness * dt))
 
 	var target_yaw: float = car.global_rotation.y
