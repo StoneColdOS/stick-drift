@@ -9,21 +9,21 @@ extends Camera3D
 ## set how close it sits when you're slow.
 
 const SAVE_PATH := "user://camera.cfg"
-const ISO := {"pitch_close": 40.0, "pitch_far": 55.0, "size_close": 13.0, "size_far": 50.0, "distance": 45.0}
+const ISO := {"pitch_close": 34.0, "pitch_far": 62.0, "size_close": 9.0, "size_far": 54.0, "distance": 55.0, "speed_pull": 0.85, "drift_pull": 0.25}
 const FOLLOW := {"pitch_close": 44.0, "pitch_far": 68.0, "dist_close": 13.0, "dist_far": 42.0}
 
 var car  ## car.gd
 var iso := true
-var zoom := 0.08                 ## base zoom when slow: 0 = close, 1 = far
+var zoom := 0.05                 ## base zoom when slow: 0 = close, 1 = far
 var look_ahead := 0.35
 var max_look_ahead := 9.0
-var speed_pull := 0.5             ## extra zoom at full speed (0 turns the dynamic zoom off)
-var full_speed := 35.0            ## m/s where the speed pull maxes out (~78 mph)
+var speed_pull := 0.5             ## 3D view: extra zoom at full speed (0 turns the dynamic zoom off). ISO has its own in ISO
+var full_speed := 32.0            ## m/s where the speed pull maxes out (~72 mph)
 var drift_pull := 0.15            ## extra zoom while drifting
 var follow_sharpness := 6.0
 var yaw_sharpness := 2.6
 
-var _zoom_smooth := 0.08
+var _zoom_smooth := 0.05
 var _dyn := 0.0
 var _yaw := 0.0
 var _focus := Vector3.ZERO
@@ -87,10 +87,12 @@ func _process(dt: float) -> void:
 
 	# Dynamic zoom: pull out with speed and drifting. Out a bit quicker than back in, so it
 	# doesn't pump in and out between gear changes.
-	var dyn_target := clampf(v.length() / full_speed, 0.0, 1.0) * speed_pull
+	var pull: float = ISO.speed_pull if iso else speed_pull
+	var dpull: float = ISO.drift_pull if iso else drift_pull
+	var dyn_target := clampf(v.length() / full_speed, 0.0, 1.0) * pull
 	if car.drifting:
-		dyn_target += drift_pull
-	var rate := 1.6 if dyn_target > _dyn else 0.7
+		dyn_target += dpull
+	var rate := 1.8 if dyn_target > _dyn else 0.7
 	_dyn = lerpf(_dyn, dyn_target, 1.0 - exp(-rate * dt))
 
 	var ahead := (v * look_ahead).limit_length(max_look_ahead)
