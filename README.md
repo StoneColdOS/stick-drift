@@ -30,7 +30,7 @@ Built in Godot 4.7.
 
 | | Touch | Keyboard | Gamepad (Thor) |
 |---|---|---|---|
-| Steer | Twist the wheel (bottom-left). Let go and it spins back to center | A / D or arrows | Left stick |
+| Steer | Twist the wheel (bottom-left), two full turns each way like a real car. The orange arc shows how far you're turned. Let go and it spins back to center | A / D or arrows | Left stick |
 | Shift | Drag the knob through the H gate (bottom-right) | 1-5, N or 0, R | R1 up / L1 down |
 | E-brake | Pull the lever down (far right) | Space | B or L2 |
 | Camera | ISO / 3D button (top-right): flat isometric or perspective, both behind the car | V | Select |

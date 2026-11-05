@@ -18,8 +18,8 @@ const FAINT := Color(1, 1, 1, 0.16)
 const ACCENT := Color(1.0, 0.55, 0.15, 0.85)
 
 const WHEEL_R := 175.0
-const WHEEL_MAX := 120.0        ## degrees each way for full lock
-const WHEEL_RETURN := 600.0     ## self-centering, degrees per second
+const WHEEL_MAX := 720.0        ## degrees each way for full lock: two full turns, like a real car
+const WHEEL_RETURN := 1100.0    ## self-centering when you let go, degrees per second
 const UNIT := 92.0              ## shifter gate unit in pixels
 const KNOB_FOLLOW := 30.0       ## gate units per second while dragging
 const KNOB_SETTLE := 9.0
@@ -226,6 +226,12 @@ func _draw() -> void:
 	draw_arc(Vector2.ZERO, WHEEL_R - 16, 0, TAU, 72, GHOST, 32.0, true)
 	draw_rect(Rect2(-10, -WHEEL_R - 2, 20, 36), ACCENT)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# Lock gauge: the wheel looks the same after a full spin, so an arc around the rim shows
+	# how far you're turned. Half the rim = full lock.
+	var frac := wheel_angle / WHEEL_MAX
+	if absf(frac) > 0.01:
+		var start := -PI / 2
+		draw_arc(wheel_center, WHEEL_R + 14, start, start + frac * PI, 48, ACCENT, 8.0, true)
 
 	# Shifter gate
 	draw_rect(Rect2(shifter_center - Vector2(UNIT * 1.9, UNIT * 1.9), Vector2(UNIT * 3.8, UNIT * 3.8)), Color(1, 1, 1, 0.05))

@@ -24,8 +24,8 @@ var front_axle := 1.25
 var rear_axle := -1.2
 var max_steer_angle := 42.0
 var steer_speed := 260.0          ## degrees per second the front wheels can turn
-var steer_grip_limit := 1.3       ## at speed, full wheel = the tightest turn the tires can hold x this. Lower = more forgiving
-var steer_curve := 1.6            ## >1 = gentler near center, finer control
+var steer_grip_limit := 2.0       ## at speed, full wheel = the tightest turn the tires can hold x this. Lower = more forgiving
+var steer_curve := 1.1            ## >1 = gentler near center, finer control
 var countersteer_assist := 0.3    ## 0 = off. Helps catch slides by adding some countersteer for you
 
 # --- Tires
