@@ -1,28 +1,9 @@
-# Unity generated
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
-/[Mm]emoryCaptures/
-/[Rr]ecordings/
+# Godot
+.godot/
+/export/
+*.translation
 
-# IDE / OS
-.vs/
-.idea/
-.vscode/
-*.csproj
-*.sln
-*.suo
-*.user
-*.pidb
-*.booproj
+# OS / editors
 .DS_Store
-
-# Builds
-*.apk
-*.aab
-*.ipa
-/iOSBuild/
+.vscode/
+.idea/

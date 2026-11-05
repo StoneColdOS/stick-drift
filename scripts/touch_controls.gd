@@ -1,0 +1,217 @@
+extends Control
+## On-screen controls, landscape:
+##   Bottom-left:  steering wheel. Put a thumb on it and twist; let go and it spins back to center.
+##   Bottom-right: H-pattern shifter. Drag the knob through the gate.
+##   Far right:    e-brake lever. Pull it down; it springs back up.
+##   Top-right:    RESET. Center (when the engine's blown): NEW ENGINE.
+## Everything is semi-transparent white so the night scene shows through.
+
+const Gate := preload("res://scripts/shifter_gate.gd")
+const Gearbox := preload("res://scripts/gearbox.gd")
+
+const GHOST := Color(1, 1, 1, 0.38)
+const GHOST_STRONG := Color(1, 1, 1, 0.55)
+const FAINT := Color(1, 1, 1, 0.16)
+const ACCENT := Color(1.0, 0.55, 0.15, 0.85)
+
+const WHEEL_R := 175.0
+const WHEEL_MAX := 150.0        ## degrees each way for full lock
+const WHEEL_RETURN := 600.0     ## self-centering, degrees per second
+const UNIT := 92.0              ## shifter gate unit in pixels
+const KNOB_FOLLOW := 30.0       ## gate units per second while dragging
+const KNOB_SETTLE := 9.0
+const LEVER_TRAVEL := 230.0
+
+var input   ## car_input.gd
+var car     ## car.gd
+var kb_steer := 0.0      ## keyboard / gamepad, set by main.gd each frame
+var kb_handbrake := 0.0
+
+# Layout (recomputed on resize)
+var wheel_center := Vector2.ZERO
+var shifter_center := Vector2.ZERO
+var lever_x := 0.0
+var lever_top := 0.0
+var reset_pos := Vector2.ZERO
+var engine_btn := Rect2()
+
+# Wheel
+var wheel_angle := 0.0
+var wheel_finger := -1
+var wheel_last := 0.0
+
+# Shifter
+var knob := Vector2.ZERO
+var knob_target := Vector2.ZERO
+var knob_finger := -1
+var knob_grab := Vector2.ZERO
+
+# E-brake
+var lever := 0.0
+var lever_finger := -1
+var lever_start_y := 0.0
+var lever_start := 0.0
+
+
+func _ready() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	get_viewport().size_changed.connect(_layout)
+	_layout()
+
+
+func _layout() -> void:
+	var s := get_viewport_rect().size
+	wheel_center = Vector2(60 + WHEEL_R, s.y - 50 - WHEEL_R)
+	lever_x = s.x - 85
+	lever_top = s.y - 80 - LEVER_TRAVEL - 60
+	shifter_center = Vector2(s.x - 210 - UNIT * 1.6, s.y - 60 - UNIT * 1.6)
+	reset_pos = Vector2(s.x - 70, 60)
+	engine_btn = Rect2(s.x / 2 - 170, s.y / 2 + 40, 340, 80)
+	queue_redraw()
+
+
+## Keyboard and gamepad shifting go through here so the knob moves too.
+func snap_to_gear(gear: int) -> void:
+	knob_finger = -1
+	knob = Gate.slot_for(gear)
+	knob_target = knob
+	_apply_gear()
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_down(event.index, event.position)
+		else:
+			_up(event.index)
+	elif event is InputEventScreenDrag:
+		_drag(event.index, event.position)
+
+
+func _down(finger: int, pos: Vector2) -> void:
+	if car and car.motor.is_blown() and engine_btn.has_point(pos):
+		car.repair_engine()
+		return
+	if pos.distance_to(reset_pos) < 45:
+		if car:
+			car.reset_to_spawn()
+		snap_to_gear(0)
+		return
+	if wheel_finger == -1 and pos.distance_to(wheel_center) < WHEEL_R * 1.25:
+		wheel_finger = finger
+		wheel_last = _angle_to(wheel_center, pos)
+		return
+	if lever_finger == -1 and absf(pos.x - lever_x) < 75 and pos.y > lever_top - 60 and pos.y < lever_top + LEVER_TRAVEL + 100:
+		lever_finger = finger
+		lever_start_y = pos.y
+		lever_start = lever
+		return
+	var local := _to_gate(pos)
+	if knob_finger == -1 and absf(local.x) < 1.9 and absf(local.y) < 1.9:
+		knob_finger = finger
+		knob_grab = knob - local
+		knob_target = knob
+		return
+
+
+func _drag(finger: int, pos: Vector2) -> void:
+	if finger == wheel_finger:
+		if pos.distance_to(wheel_center) > WHEEL_R * 0.2:  # angles get jumpy near the center
+			var a := _angle_to(wheel_center, pos)
+			wheel_angle = clampf(wheel_angle + rad_to_deg(angle_difference(wheel_last, a)), -WHEEL_MAX, WHEEL_MAX)
+			wheel_last = a
+	elif finger == knob_finger:
+		knob_target = Gate.project(_to_gate(pos) + knob_grab)
+	elif finger == lever_finger:
+		lever = clampf(lever_start + (pos.y - lever_start_y) / LEVER_TRAVEL, 0.0, 1.0)
+
+
+func _up(finger: int) -> void:
+	if finger == wheel_finger:
+		wheel_finger = -1
+	elif finger == lever_finger:
+		lever_finger = -1
+	elif finger == knob_finger:
+		knob_finger = -1
+		# Released deep enough into a slot: seat it. Otherwise spring back to neutral.
+		if absf(knob.y) >= Gate.ENGAGE:
+			knob_target = Vector2(roundf(knob.x), signf(knob.y))
+		else:
+			knob_target = Vector2.ZERO
+
+
+func _process(dt: float) -> void:
+	if wheel_finger == -1:
+		wheel_angle = move_toward(wheel_angle, 0.0, WHEEL_RETURN * dt)
+	if lever_finger == -1:
+		lever = move_toward(lever, 0.0, 7.0 * dt)
+	knob = Gate.move_along(knob, knob_target, (KNOB_FOLLOW if knob_finger != -1 else KNOB_SETTLE) * dt)
+	_apply_gear()
+
+	if input:
+		var touch_steer := wheel_angle / WHEEL_MAX  # clockwise on screen = right
+		input.steer = kb_steer if absf(kb_steer) > 0.05 else touch_steer
+		input.handbrake = maxf(lever, kb_handbrake)
+	queue_redraw()
+
+
+func _apply_gear() -> void:
+	if input:
+		input.gear = Gate.gear_at(knob)
+
+
+func _to_gate(pos: Vector2) -> Vector2:
+	var d := (pos - shifter_center) / UNIT
+	return Vector2(d.x, -d.y)
+
+
+func _gate_to_screen(g: Vector2) -> Vector2:
+	return shifter_center + Vector2(g.x, -g.y) * UNIT
+
+
+static func _angle_to(c: Vector2, p: Vector2) -> float:
+	return atan2(p.y - c.y, p.x - c.x)
+
+
+# ------------------------------------------------------------------ drawing
+
+func _draw() -> void:
+	var font := ThemeDB.fallback_font
+
+	# Steering wheel
+	draw_set_transform(wheel_center, deg_to_rad(wheel_angle), Vector2.ONE)
+	for a in [0.0, PI, PI / 2]:
+		draw_line(Vector2.ZERO, Vector2(cos(a), sin(a)) * (WHEEL_R - 25), FAINT, 26.0)
+	draw_circle(Vector2.ZERO, 48, FAINT)
+	draw_arc(Vector2.ZERO, WHEEL_R - 16, 0, TAU, 72, GHOST, 32.0, true)
+	draw_rect(Rect2(-10, -WHEEL_R - 2, 20, 36), ACCENT)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+	# Shifter gate
+	draw_rect(Rect2(shifter_center - Vector2(UNIT * 1.9, UNIT * 1.9), Vector2(UNIT * 3.8, UNIT * 3.8)), Color(1, 1, 1, 0.05))
+	draw_line(_gate_to_screen(Vector2(-1, 0)), _gate_to_screen(Vector2(1, 0)), FAINT, 14.0)
+	for c in [-1, 0, 1]:
+		draw_line(_gate_to_screen(Vector2(c, -1)), _gate_to_screen(Vector2(c, 1)), FAINT, 14.0)
+	for g in [1, 2, 3, 4, 5, Gate.REVERSE]:
+		var slot := Gate.slot_for(g)
+		var p := _gate_to_screen(slot) + Vector2(-15, -40 if slot.y > 0 else 60)
+		draw_string(font, p, Gearbox.label(g), HORIZONTAL_ALIGNMENT_CENTER, 30, 30, GHOST)
+	var kp := _gate_to_screen(knob)
+	draw_circle(kp, 50, GHOST_STRONG)
+	draw_arc(kp, 34, 0, TAU, 40, ACCENT, 4.0, true)
+
+	# E-brake lever
+	draw_line(Vector2(lever_x, lever_top - 20), Vector2(lever_x, lever_top + LEVER_TRAVEL + 20), FAINT, 16.0)
+	var hy := lever_top + lever * LEVER_TRAVEL
+	draw_rect(Rect2(lever_x - 58, hy - 34, 116, 68), GHOST_STRONG)
+	draw_string(font, Vector2(lever_x - 58, hy + 8), "E-BRAKE", HORIZONTAL_ALIGNMENT_CENTER, 116, 20, Color(0, 0, 0, 0.7))
+
+	# Reset
+	draw_circle(reset_pos, 36, Color(1, 1, 1, 0.18))
+	draw_string(font, reset_pos + Vector2(-36, 7), "RESET", HORIZONTAL_ALIGNMENT_CENTER, 72, 18, Color.WHITE)
+
+	# New engine button (only when blown; the HUD draws the panel behind it)
+	if car and car.motor.is_blown():
+		draw_rect(engine_btn, Color(1, 1, 1, 0.25))
+		draw_string(font, engine_btn.position + Vector2(0, 52), "NEW ENGINE", HORIZONTAL_ALIGNMENT_CENTER, engine_btn.size.x, 34, Color.WHITE)
