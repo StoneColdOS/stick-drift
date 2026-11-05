@@ -12,6 +12,7 @@ const CarScript := preload("res://scripts/car.gd")
 const CarModel := preload("res://scripts/car_model.gd")
 const CarInput := preload("res://scripts/car_input.gd")
 const Neighborhood := preload("res://scripts/neighborhood.gd")
+const Tokyo := preload("res://scripts/tokyo.gd")
 const ChaseCamera := preload("res://scripts/chase_camera.gd")
 const TouchControls := preload("res://scripts/touch_controls.gd")
 const Hud := preload("res://scripts/hud.gd")
@@ -33,6 +34,7 @@ var camera: Camera3D
 var touch: Control
 var hud: Control
 var environment: Environment
+var map_name := "tokyo"
 
 
 func _ready() -> void:
@@ -58,8 +60,11 @@ func _ready() -> void:
 	world_viewport.add_child(world)
 	_build_environment()
 
-	town = Neighborhood.new()
-	town.name = "Neighborhood"
+	var settings := ConfigFile.new()
+	settings.load("user://settings.cfg")
+	map_name = settings.get_value("world", "map", "tokyo")
+	town = Tokyo.new() if map_name == "tokyo" else Neighborhood.new()
+	town.name = map_name.capitalize()
 	world.add_child(town)
 	town.build()
 
@@ -68,9 +73,7 @@ func _ready() -> void:
 	car.input = input
 	world.add_child(car)
 	car.engine_blown.connect(func(): Haptics.buzz(300))
-	var settings := ConfigFile.new()
-	if settings.load("user://settings.cfg") == OK:
-		car.motor.damage_enabled = settings.get_value("engine", "risky", false)
+	car.motor.damage_enabled = settings.get_value("engine", "risky", false)
 	car.global_transform = town.spawn
 	car._spawn = town.spawn
 	var model := CarModel.new()
@@ -84,6 +87,8 @@ func _ready() -> void:
 	world.add_child(camera)
 	camera.current = true
 	camera.snap()
+	if "camera" in town:
+		town.camera = camera
 
 	var ui := CanvasLayer.new()
 	ui.layer = 5
@@ -95,6 +100,7 @@ func _ready() -> void:
 	touch.input = input
 	touch.car = car
 	touch.camera = camera
+	touch.map_name = map_name
 	ui.add_child(touch)
 
 

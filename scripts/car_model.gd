@@ -1,10 +1,12 @@
 extends Node3D
-## The car's looks: a blocky two-tone ("panda") old-school coupe, plus skid marks, tire smoke,
+## The car's looks: a low-poly S13-style coupe, plus skid marks, tire smoke,
 ## engine smoke and brake lights. Swap this for a real low-poly model later; the physics won't care.
 ## Car faces -Z.
 
 const Util := preload("res://scripts/util.gd")
 
+const BODY := Color(0.9, 0.9, 0.88)    # pearl white
+const LOWER := Color(0.22, 0.22, 0.24) # dark grey two-tone
 const WHITE := Color(0.92, 0.92, 0.90)
 const BLACK := Color(0.05, 0.05, 0.06)
 const GLASS := Color(0.05, 0.07, 0.10)
@@ -38,26 +40,39 @@ var last_mark := [Vector3.INF, Vector3.INF]
 
 func build(the_car) -> void:
 	car = the_car
-	var white := Util.lit(WHITE, 0.35)
+	# S13-style coupe: long low hood, thin wide headlights, raked glass, short deck,
+	# full-width tail lights. Our own low-poly take, no badges.
+	var body := Util.lit(BODY, 0.3)
+	var lower := Util.lit(LOWER, 0.5)
 	var black := Util.lit(BLACK, 0.6)
 	var glass := Util.lit(GLASS, 0.1)
 
-	Util.box(self, Vector3(1.66, 0.30, 4.22), Vector3(0, 0.45, 0), black)
-	Util.box(self, Vector3(1.64, 0.30, 4.16), Vector3(0, 0.74, 0), white)
-	Util.box(self, Vector3(1.56, 0.08, 1.20), Vector3(0, 0.86, -1.45), white, Vector3(-4, 0, 0))
-	Util.box(self, Vector3(1.42, 0.48, 1.90), Vector3(0, 1.12, 0.35), glass)
-	Util.box(self, Vector3(1.38, 0.06, 1.55), Vector3(0, 1.38, 0.45), white)
-	Util.box(self, Vector3(1.60, 0.20, 0.12), Vector3(0, 0.42, -2.12), black)
-	Util.box(self, Vector3(1.60, 0.20, 0.12), Vector3(0, 0.42, 2.12), black)
-	Util.box(self, Vector3(1.50, 0.05, 0.25), Vector3(0, 0.92, 1.95), black)
+	Util.box(self, Vector3(1.69, 0.26, 4.42), Vector3(0, 0.40, 0), lower)              # sills / skirts
+	Util.box(self, Vector3(1.68, 0.30, 4.40), Vector3(0, 0.66, 0), body)               # main body
+	Util.box(self, Vector3(1.60, 0.10, 1.60), Vector3(0, 0.83, -1.35), body, Vector3(-3, 0, 0))  # long hood
+	Util.box(self, Vector3(1.66, 0.16, 0.30), Vector3(0, 0.62, -2.12), body)           # nose
+	Util.box(self, Vector3(1.40, 0.12, 0.06), Vector3(0, 0.42, -2.23), black)          # lower intake
+	Util.box(self, Vector3(1.38, 0.06, 0.95), Vector3(0, 1.0, -0.33), glass, Vector3(-28, 0, 0))  # windshield
+	Util.box(self, Vector3(1.36, 0.36, 1.45), Vector3(0, 1.04, 0.32), glass)           # side glass
+	Util.box(self, Vector3(1.32, 0.06, 1.12), Vector3(0, 1.24, 0.35), body)            # roof
+	Util.box(self, Vector3(1.34, 0.05, 0.8), Vector3(0, 1.07, 1.2), glass, Vector3(22, 0, 0))     # rear window
+	Util.box(self, Vector3(1.60, 0.10, 0.75), Vector3(0, 0.86, 1.86), body)            # short trunk
+	Util.box(self, Vector3(1.50, 0.04, 0.12), Vector3(0, 0.93, 2.18), black)           # lip spoiler
+	Util.box(self, Vector3(1.66, 0.22, 0.12), Vector3(0, 0.45, 2.2), lower)            # rear bumper
+	Util.box(self, Vector3(0.15, 0.08, 0.1), Vector3(-0.86, 1.0, -0.5), body)          # mirrors
+	Util.box(self, Vector3(0.15, 0.08, 0.1), Vector3(0.86, 1.0, -0.5), body)
 
 	var hl := Util.emissive(HEADLIGHT, 2.5)
-	Util.box(self, Vector3(0.38, 0.12, 0.06), Vector3(-0.55, 0.72, -2.09), hl)
-	Util.box(self, Vector3(0.38, 0.12, 0.06), Vector3(0.55, 0.72, -2.09), hl)
+	Util.box(self, Vector3(0.46, 0.09, 0.05), Vector3(-0.52, 0.72, -2.25), hl)        # thin projectors
+	Util.box(self, Vector3(0.46, 0.09, 0.05), Vector3(0.52, 0.72, -2.25), hl)
+	var amber := Util.emissive(Color(1.0, 0.55, 0.1), 1.2)
+	Util.box(self, Vector3(0.16, 0.08, 0.05), Vector3(-0.82, 0.72, -2.22), amber)
+	Util.box(self, Vector3(0.16, 0.08, 0.05), Vector3(0.82, 0.72, -2.22), amber)
 
 	tail_mat = Util.emissive_instance(TAIL, 1.3)
-	Util.box(self, Vector3(0.5, 0.14, 0.06), Vector3(-0.52, 0.74, 2.1), tail_mat)
-	Util.box(self, Vector3(0.5, 0.14, 0.06), Vector3(0.52, 0.74, 2.1), tail_mat)
+	Util.box(self, Vector3(0.56, 0.13, 0.05), Vector3(-0.52, 0.72, 2.27), tail_mat)    # full-width tails
+	Util.box(self, Vector3(0.56, 0.13, 0.05), Vector3(0.52, 0.72, 2.27), tail_mat)
+	Util.box(self, Vector3(0.46, 0.11, 0.05), Vector3(0, 0.72, 2.275), Util.emissive(Color(0.5, 0.02, 0.02), 0.6))
 
 	var tire := Util.lit(TIRE, 0.9)
 	front_left = _wheel(Vector3(-0.74, 0.31, -car.front_axle), tire)
@@ -190,15 +205,15 @@ func _ground_glow(pos: Vector3, size: Vector2, mat: Material) -> MeshInstance3D:
 func _build_lights() -> void:
 	# Headlights: bright halos on the lamps, plus a warm beam pool stretched out on the road.
 	var head_halo := _additive(Color(1.6, 1.45, 1.15, 0.9), true)
-	_halo(Vector3(-0.55, 0.75, -2.2), 1.3, head_halo)
-	_halo(Vector3(0.55, 0.75, -2.2), 1.3, head_halo)
+	_halo(Vector3(-0.52, 0.73, -2.32), 1.2, head_halo)
+	_halo(Vector3(0.52, 0.73, -2.32), 1.2, head_halo)
 	_ground_glow(Vector3(0, 0.05, -7.5), Vector2(5.5, 11.0), _additive(Color(1.0, 0.85, 0.6, 0.32), false))
 	_ground_glow(Vector3(0, 0.06, -4.2), Vector2(3.2, 4.0), _additive(Color(1.0, 0.9, 0.7, 0.3), false))
 
 	# Tail lights: red halos and a red wash on the road behind, both flare up when braking.
 	tail_halo_mat = _additive(Color(1.8, 0.12, 0.08, 0.7), true)
-	tail_halos.append(_halo(Vector3(-0.52, 0.75, 2.2), 0.9, tail_halo_mat))
-	tail_halos.append(_halo(Vector3(0.52, 0.75, 2.2), 0.9, tail_halo_mat))
+	tail_halos.append(_halo(Vector3(-0.52, 0.73, 2.34), 0.9, tail_halo_mat))
+	tail_halos.append(_halo(Vector3(0.52, 0.73, 2.34), 0.9, tail_halo_mat))
 	tail_pool_mat = _additive(Color(1.0, 0.05, 0.03, 0.22), false)
 	tail_pool = _ground_glow(Vector3(0, 0.05, 3.3), Vector2(3.6, 3.0), tail_pool_mat)
 
@@ -216,10 +231,10 @@ func _build_exhaust() -> void:
 	pipe.mesh = cyl
 	pipe.material_override = Util.lit(Color(0.35, 0.35, 0.37), 0.3)
 	add_child(pipe)
-	pipe.position = Vector3(-0.55, 0.28, 2.15)
+	pipe.position = Vector3(-0.55, 0.3, 2.25)
 	pipe.rotation_degrees = Vector3(90, 0, 0)
 
-	var tip := Vector3(-0.55, 0.28, 2.3)
+	var tip := Vector3(-0.55, 0.3, 2.4)
 	exhaust = _puffs(tip, 36, 1.3, 0.0, Color(0.8, 0.8, 0.85, 0.32))
 	exhaust.emitting = true
 	exhaust_burst = _puffs(tip, 16, 0.9, 1.0, Color(0.85, 0.85, 0.9, 0.5))

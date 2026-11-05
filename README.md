@@ -2,7 +2,7 @@
 
 *Night drifting with a real stick.*
 
-A semi top-down, pixelated low-poly drift game. Night-time suburb, white LED street lights, an old-school two-tone coupe, an on-screen steering wheel and a real H-pattern stick shift. The gas is always on, so shifting *is* the game: forget to shift and you'll blow the engine, downshift too hard and you'll blow it faster.
+A semi top-down, pixelated low-poly drift game. Night-time Tokyo streets (or a quiet suburb), neon and white LED street lights, an S13-style coupe, an on-screen steering wheel and a real H-pattern stick shift. The gas is always on, so shifting *is* the game: forget to shift and you'll blow the engine, downshift too hard and you'll blow it faster.
 
 Built in Godot 4.7.
 
@@ -36,6 +36,7 @@ Built in Godot 4.7.
 | Camera | ISO / 3D button (top-right): flat isometric or perspective, both behind the car | V | Select |
 | Zoom | Automatic: close when slow, pulls out with speed and drifting. Pinch or − / + sets how close it sits when slow | - / = or mouse wheel | Y / X |
 | Reset | RESET (top-right) | Enter | Start |
+| Map | MAP: TOKYO / SUBURB (top-left), reloads the game | | |
 
 - **The gas is always on** whenever you're in gear.
 - **Slow down** by downshifting (engine braking) or knocking it into **neutral**.
@@ -58,8 +59,11 @@ Everything is built in code from `scripts/main.gd`, no scene editing needed.
 | `tools/make_controls_art.py` | Paints the realistic wheel, knob and gate in `art/` (Python + Pillow + numpy) |
 | `scripts/retro.gdshader` | Dither / colour quantization / vignette over the world |
 | `scripts/hud.gd` | Gear, tach, speed, engine health, drift points |
+| `scripts/tokyo.gd` | Tokyo-style district: buildings, windows, neon, vending machines, poles and wires, crosswalks, central lot |
+| `scripts/building.gdshader` | Building material with an x-ray circle cut around the car so tall buildings never hide it |
+| `scripts/mesh_batch.gd` | Merges thousands of boxes into a few meshes per material (keeps phones fast) |
 | `scripts/neighborhood.gd` | The night suburb and street lights |
-| `scripts/car_model.gd` | Placeholder car, headlight/tail light glow, exhaust and backfires, skid marks, smoke |
+| `scripts/car_model.gd` | Low-poly S13-style coupe, headlight/tail light glow, exhaust and backfires, skid marks, smoke |
 | `scripts/chase_camera.gd` | Isometric or perspective chase camera, with zoom (both remembered) |
 | `scripts/haptics.gd` | Vibration on gear changes |
 | `tests/test_drive.gd` | Automated test: launches, shifts, drifts, blows the engine |

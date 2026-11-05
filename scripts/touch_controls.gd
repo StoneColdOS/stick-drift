@@ -42,6 +42,8 @@ var wheel_center := Vector2.ZERO
 var shifter_center := Vector2.ZERO
 var reset_pos := Vector2.ZERO
 var mode_btn := Rect2(30, 24, 170, 46)  ## CHILL / RISKY engine toggle
+var map_btn := Rect2(30, 80, 170, 46)   ## TOKYO / SUBURB, reloads the game
+var map_name := "tokyo"
 var view_pos := Vector2.ZERO
 var zoom_out_pos := Vector2.ZERO
 var zoom_in_pos := Vector2.ZERO
@@ -102,7 +104,14 @@ func _down(finger: int, pos: Vector2) -> void:
 	if car and car.motor.is_blown() and engine_btn.has_point(pos):
 		car.repair_engine()
 		return
-	if mode_btn.grow(10).has_point(pos):
+	if map_btn.grow(8).has_point(pos):
+		var cfg := ConfigFile.new()
+		cfg.load(SETTINGS)
+		cfg.set_value("world", "map", "suburb" if map_name == "tokyo" else "tokyo")
+		cfg.save(SETTINGS)
+		get_tree().reload_current_scene.call_deferred()
+		return
+	if mode_btn.grow(8).has_point(pos):
 		if car:
 			car.motor.damage_enabled = not car.motor.damage_enabled
 			car.repair_engine()
@@ -242,6 +251,9 @@ func _draw() -> void:
 		var risky: bool = car.motor.damage_enabled
 		draw_rect(mode_btn, Color(1, 0.3, 0.2, 0.3) if risky else Color(0.5, 0.9, 1.0, 0.18))
 		draw_string(font, mode_btn.position + Vector2(0, 31), "ENGINE: RISKY" if risky else "ENGINE: CHILL", HORIZONTAL_ALIGNMENT_CENTER, mode_btn.size.x, 18, Color.WHITE)
+
+	draw_rect(map_btn, Color(1, 0.3, 0.6, 0.22) if map_name == "tokyo" else Color(0.5, 1.0, 0.6, 0.18))
+	draw_string(font, map_btn.position + Vector2(0, 31), "MAP: " + map_name.to_upper(), HORIZONTAL_ALIGNMENT_CENTER, map_btn.size.x, 18, Color.WHITE)
 
 	# View toggle + zoom
 	draw_circle(view_pos, 36, Color(1, 1, 1, 0.18))

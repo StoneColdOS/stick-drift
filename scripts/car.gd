@@ -89,7 +89,7 @@ func _ready() -> void:
 
 	var shape := CollisionShape3D.new()
 	var b := BoxShape3D.new()
-	b.size = Vector3(1.66, 0.9, 4.2)
+	b.size = Vector3(1.69, 0.9, 4.45)
 	shape.shape = b
 	shape.position = Vector3(0, 0.65, 0)
 	add_child(shape)
