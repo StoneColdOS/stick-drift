@@ -82,12 +82,12 @@ func _run() -> void:
 	# --- Normal steering at speed doesn't throw the car sideways
 	var planted := 0.0
 	main.touch.snap_to_gear(4)
-	Input.action_press("steer_right", 0.7)
-	for i in 240:
+	for i in 240:  # wind the wheel on smoothly over a second, like a normal corner
+		Input.action_press("steer_right", minf(0.7, i / 120.0 * 0.7))
 		await physics_frame
 		planted = maxf(planted, absf(car.slip_angle))
 	Input.action_release("steer_right")
-	_check(planted < 10.0, "Hard steering at speed stays planted without the e-brake (max %.0f°)" % planted)
+	_check(planted < 10.0, "Smoothly winding on lock at speed stays planted (max %.0f°)" % planted)
 	main.touch.snap_to_gear(4)
 	await _secs(1.0)
 
@@ -101,7 +101,7 @@ func _run() -> void:
 	await _secs(0.5)
 	_check(car.motor.is_blown(), "Money shift into 1st at speed blows it")
 
-	# --- Drift: 2nd gear, steer + e-brake
+	# --- Drift: 2nd gear, flick the wheel to kick the rear out
 	car.repair_engine()
 	main.touch.snap_to_gear(0)
 	car.reset_to_spawn()
@@ -111,11 +111,9 @@ func _run() -> void:
 	var max_slip := 0.0
 	var drifted := false
 	var drift_time := 0.0
-	Input.action_press("steer_right")
-	Input.action_press("ebrake")
+	Input.action_press("steer_right")  # instant full lock = a flick
 	for i in 80:
 		await physics_frame
-	Input.action_release("ebrake")
 	for i in 360:  # simple countersteer: steer against the slide
 		await physics_frame
 		var want := clampf(-car.slip_angle / 70.0, -1.0, 1.0) if i > 15 else 1.0
@@ -138,16 +136,35 @@ func _run() -> void:
 	main.touch.snap_to_gear(2)
 	await _secs(2.5)
 	Input.action_press("steer_right")
-	Input.action_press("ebrake")
 	await _secs(0.6)
-	Input.action_release("ebrake")
 	Input.action_release("steer_right")
 	var worst := 0.0
 	for i in 360:
 		await physics_frame
 		worst = maxf(worst, absf(car.slip_angle))
+	# Downshift kick: turning in 3rd, drop to 2nd and the rear steps out.
+	main.touch.snap_to_gear(0)
+	car.reset_to_spawn()
+	await _secs(0.5)
+	main.touch.snap_to_gear(1)
+	await _secs(1.2)
+	main.touch.snap_to_gear(2)
+	await _secs(1.0)
+	main.touch.snap_to_gear(3)
+	await _secs(0.5)
+	for i in 60:
+		Input.action_press("steer_left", minf(0.5, i / 60.0 * 0.5))
+		await physics_frame
+	var calm := absf(car.slip_angle)
+	main.touch.snap_to_gear(2)
+	var kicked := 0.0
+	for i in 120:
+		await physics_frame
+		kicked = maxf(kicked, absf(car.slip_angle))
+	Input.action_release("steer_left")
+	_check(calm < 8.0 and kicked > 15.0, "Downshifting mid-turn kicks the rear out (%.0f° -> %.0f°)" % [calm, kicked])
 	_check(worst < 80.0, "Letting go of the wheel mid-drift doesn't spin you out (max %.0f°)" % worst)
-	_check(drifted, "E-brake + countersteer holds a drift (%.1fs, max %.0f°)" % [drift_time, max_slip])
+	_check(drifted, "Flick + countersteer holds a drift (%.1fs, max %.0f°)" % [drift_time, max_slip])
 	await _secs(0.5)
 	_check(main.hud.drift_points > 0.0 or main.hud.best > 0.0, "Drifting scores points")
 

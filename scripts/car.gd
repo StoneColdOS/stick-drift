@@ -34,6 +34,10 @@ var rear_grip := 1.1
 var min_rear_lateral_share := 0.38## rear keeps this much side grip at full wheelspin, so drifts stay catchable
 var handbrake_grip_scale := 0.3
 var handbrake_brake := 0.3
+var kick_time := 0.45             ## how long a flick or downshift kick loosens the rear
+var kick_hold := 0.3              ## full strength for this long, then it fades
+var flick_threshold := 0.22       ## how sudden a wheel move counts as a flick (share of full lock)
+var kick_min_speed := 7.0         ## m/s (~16 mph); below this nothing kicks
 var traction_control := 0.8       ## when not drifting, the auto gas only uses this share of rear grip. 0 = off
 var drift_latch_time := 1.0       ## after the e-brake, full power stays on this long (and while sliding)
 var base_angular_damp := 0.7
@@ -58,6 +62,9 @@ var drifting := false
 var _spawn: Transform3D
 var _reset_requested := false
 var _was_blown := false
+var _kick := 0.0
+var _kick_cooldown := 0.0
+var _steer_slow := 0.0
 var _drift_latch := 0.0
 
 
@@ -91,8 +98,17 @@ func _ready() -> void:
 	motor.repair()
 
 
+## How hard the rear is being kicked loose right now (0..1). There's no e-brake on screen:
+## a quick flick of the wheel or a downshift while turning does it, like a real clutch kick.
 func handbrake() -> float:
-	return input.handbrake if input else 0.0
+	var manual: float = input.handbrake if input else 0.0
+	return maxf(manual, clampf(_kick / kick_hold, 0.0, 1.0))
+
+
+func kick() -> void:
+	if _kick_cooldown <= 0.0:
+		_kick = kick_time
+		_kick_cooldown = kick_time + 0.25
 
 
 func forward() -> Vector3:
@@ -116,10 +132,21 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 func _physics_process(dt: float) -> void:
 	# Gear comes straight from the shifter (clutchless).
 	var requested: int = input.gear if input else 0
+	var raw_steer: float = input.steer if input else 0.0
 	if requested != gear:
 		var old := gear
 		gear = requested
 		gear_changed.emit(old, gear)
+		# Downshift kick: drop a gear while turning and the rear steps out.
+		if gear > 0 and old > gear and absf(raw_steer) > 0.1 and speed > kick_min_speed:
+			kick()
+
+	# Flick: a sudden wheel move at speed kicks the rear out.
+	if absf(raw_steer - _steer_slow) > flick_threshold and speed > kick_min_speed:
+		kick()
+	_steer_slow = lerpf(_steer_slow, raw_steer, 1.0 - exp(-8.0 * dt))
+	_kick = maxf(0.0, _kick - dt)
+	_kick_cooldown = maxf(0.0, _kick_cooldown - dt)
 
 	var raw: float = input.steer if input else 0.0
 	var steer_in := signf(raw) * pow(absf(raw), steer_curve)

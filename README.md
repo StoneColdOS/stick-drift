@@ -32,14 +32,14 @@ Built in Godot 4.7.
 |---|---|---|---|
 | Steer | Twist the wheel (bottom-left), two full turns each way like a real car. The orange arc shows how far you're turned. Let go and it spins back to center | A / D or arrows | Left stick |
 | Shift | Drag the knob through the H gate (bottom-right) | 1-5, N or 0, R | R1 up / L1 down |
-| E-brake | Pull the lever down (far right) | Space | B or L2 |
+| Kick the rear out | Flick the wheel quickly, or downshift while turning (no e-brake) | Space (or tap A/D) | B |
 | Camera | ISO / 3D button (top-right): flat isometric or perspective, both behind the car | V | Select |
 | Zoom | Automatic: close when slow, pulls out with speed and drifting. Pinch or − / + sets how close it sits when slow | - / = or mouse wheel | Y / X |
 | Reset | RESET (top-right) | Enter | Start |
 
 - **The gas is always on** whenever you're in gear.
 - **Slow down** by downshifting (engine braking) or knocking it into **neutral**.
-- **Drift:** get going in 2nd, flick the wheel and tug the e-brake, then countersteer. 2nd is the drift gear; it has just enough power to keep the rear sliding.
+- **Drift:** there's no e-brake. Get going in 2nd and either **flick** the wheel quickly or **downshift while turning** (a clutch kick) to break the rear loose, then countersteer. Smooth steering stays planted. 2nd is the drift gear; once you're sliding you get full power to hold it.
 - **Forgiving by default:** the auto gas keeps the rear tires hooked up while you're just driving, and steering tightens up with speed, so the car only slides when you start a drift with the e-brake. Once you're sliding you get full power to hold it, a little countersteer assist, and past about 35° the car resists spinning out.
 - **Engine: CHILL (default):** a rev limiter. It bounces off redline and crackles, but never blows. Tap **ENGINE** (top-left) to switch to **RISKY**: no limiter, a health bar, and sitting on the limiter (~25s) or a money shift (way past 9800 rpm) blows it. Your pick is remembered.
 - **Vibration:** gear changes buzz on the Thor and Android. On iPhone (iOS 18+) you get a haptic tick when your thumb lifts off the shifter; Safari doesn't allow anything better.
@@ -54,7 +54,7 @@ Everything is built in code from `scripts/main.gd`, no scene editing needed.
 | `scripts/motor.gd` | Torque curve, redline, engine braking, blowing up |
 | `scripts/gearbox.gd` | 5-speed ratios |
 | `scripts/shifter_gate.gd` | H-pattern gate logic (knob always travels through neutral) |
-| `scripts/touch_controls.gd` | Wheel, shifter, e-brake lever, buttons |
+| `scripts/touch_controls.gd` | Wheel, shifter, buttons |
 | `scripts/hud.gd` | Gear, tach, speed, engine health, drift points |
 | `scripts/neighborhood.gd` | The night suburb and street lights |
 | `scripts/car_model.gd` | Placeholder car, headlight/tail light glow, exhaust and backfires, skid marks, smoke |
@@ -72,7 +72,7 @@ In `scripts/car.gd`:
 - Easier to catch a drift: raise `countersteer_assist`, `spin_guard` or `min_rear_lateral_share`
 - Harder / more raw: set `traction_control`, `countersteer_assist` and `spin_guard` to 0
 - Steering sharpness at speed: `steer_grip_limit` (higher = sharper, easier to overdo)
-- E-brake: `handbrake_grip_scale` (lower = looser rear), `handbrake_brake` (higher = scrubs more speed)
+- Kicks: `flick_threshold` (lower = easier to trigger), `kick_time`, `handbrake_grip_scale` (how loose the rear gets during a kick)
 
 In `scripts/motor.gd`: `damage_rpm`, `sustained_damage`, `money_shift_rpm`.
 Pixel size: `PIXEL_SHRINK` in `scripts/main.gd` (2 = 360 px tall world; higher = chunkier).

@@ -3,9 +3,9 @@ extends Node
 ## the touch controls and the HUD.
 ##
 ## Keyboard (for testing on the Mac): A/D or arrows steer, 1-5 gears, N or 0 neutral, R reverse,
-## Space e-brake, Enter reset, V camera view, - and = zoom (or the mouse wheel). You can also drag the on-screen
+## Space kicks the rear out, Enter reset, V camera view, - and = zoom (or the mouse wheel). You can also drag the on-screen
 ## controls with the mouse.
-## Gamepad (Thor): left stick steers, R1/L1 shift up/down, B or L2 e-brake, Y/X zoom, Select camera view,
+## Gamepad (Thor): left stick steers, R1/L1 shift up/down, B kick, Y/X zoom, Select camera view,
 ## Start resets.
 
 const CarScript := preload("res://scripts/car.gd")
@@ -118,7 +118,8 @@ func _build_environment() -> void:
 func _process(_dt: float) -> void:
 	var kb_steer := Input.get_axis("steer_left", "steer_right")
 	touch.kb_steer = kb_steer
-	touch.kb_handbrake = Input.get_action_strength("ebrake")
+	if Input.is_action_just_pressed("kick"):
+		car.kick()
 
 	for g in range(1, 6):
 		if Input.is_action_just_pressed("gear_%d" % g):
@@ -161,7 +162,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _setup_actions() -> void:
 	_key("steer_left", [KEY_A, KEY_LEFT])
 	_key("steer_right", [KEY_D, KEY_RIGHT])
-	_key("ebrake", [KEY_SPACE])
+	_key("kick", [KEY_SPACE])
 	for g in range(1, 6):
 		_key("gear_%d" % g, [KEY_0 + g])
 	_key("gear_n", [KEY_N, KEY_0])
@@ -175,8 +176,7 @@ func _setup_actions() -> void:
 
 	_axis("steer_left", JOY_AXIS_LEFT_X, -1.0)
 	_axis("steer_right", JOY_AXIS_LEFT_X, 1.0)
-	_axis("ebrake", JOY_AXIS_TRIGGER_LEFT, 1.0)
-	_button("ebrake", JOY_BUTTON_B)
+	_button("kick", JOY_BUTTON_B)
 	_button("shift_up", JOY_BUTTON_RIGHT_SHOULDER)
 	_button("shift_down", JOY_BUTTON_LEFT_SHOULDER)
 	_button("reset", JOY_BUTTON_START)

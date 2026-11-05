@@ -2,7 +2,7 @@ extends Control
 ## On-screen controls, landscape:
 ##   Bottom-left:  steering wheel. Put a thumb on it and twist; let go and it spins back to center.
 ##   Bottom-right: H-pattern shifter. Drag the knob through the gate.
-##   Far right:    e-brake lever. Pull it down; it springs back up.
+##   No e-brake: flick the wheel or downshift while turning to kick the rear out.
 ##   Top-right:    ISO/3D camera toggle, RESET, then zoom out (-) and in (+).
 ##                 Pinch anywhere empty to zoom too.
 ##   Center (when the engine's blown): NEW ENGINE.
@@ -24,7 +24,6 @@ const WHEEL_RETURN := 1100.0    ## self-centering when you let go, degrees per s
 const UNIT := 92.0              ## shifter gate unit in pixels
 const KNOB_FOLLOW := 30.0       ## gate units per second while dragging
 const KNOB_SETTLE := 9.0
-const LEVER_TRAVEL := 230.0
 
 var input   ## car_input.gd
 var car     ## car.gd
@@ -35,8 +34,6 @@ var kb_handbrake := 0.0
 # Layout (recomputed on resize)
 var wheel_center := Vector2.ZERO
 var shifter_center := Vector2.ZERO
-var lever_x := 0.0
-var lever_top := 0.0
 var reset_pos := Vector2.ZERO
 var mode_btn := Rect2(30, 24, 170, 46)  ## CHILL / RISKY engine toggle
 var view_pos := Vector2.ZERO
@@ -56,11 +53,6 @@ var knob_target := Vector2.ZERO
 var knob_finger := -1
 var knob_grab := Vector2.ZERO
 
-# E-brake
-var lever := 0.0
-var lever_finger := -1
-var lever_start_y := 0.0
-var lever_start := 0.0
 
 
 func _ready() -> void:
@@ -73,9 +65,7 @@ func _ready() -> void:
 func _layout() -> void:
 	var s := get_viewport_rect().size
 	wheel_center = Vector2(60 + WHEEL_R, s.y - 50 - WHEEL_R)
-	lever_x = s.x - 85
-	lever_top = s.y - 80 - LEVER_TRAVEL - 60
-	shifter_center = Vector2(s.x - 210 - UNIT * 1.6, s.y - 60 - UNIT * 1.6)
+	shifter_center = Vector2(s.x - 60 - UNIT * 1.9, s.y - 60 - UNIT * 1.6)
 	reset_pos = Vector2(s.x - 70, 60)
 	view_pos = Vector2(s.x - 165, 60)
 	zoom_out_pos = Vector2(s.x - 70, 145)
@@ -133,11 +123,6 @@ func _down(finger: int, pos: Vector2) -> void:
 		wheel_finger = finger
 		wheel_last = _angle_to(wheel_center, pos)
 		return
-	if lever_finger == -1 and absf(pos.x - lever_x) < 75 and pos.y > lever_top - 60 and pos.y < lever_top + LEVER_TRAVEL + 100:
-		lever_finger = finger
-		lever_start_y = pos.y
-		lever_start = lever
-		return
 	var local := _to_gate(pos)
 	if knob_finger == -1 and absf(local.x) < 1.9 and absf(local.y) < 1.9:
 		knob_finger = finger
@@ -155,8 +140,6 @@ func _drag(finger: int, pos: Vector2) -> void:
 			wheel_last = a
 	elif finger == knob_finger:
 		knob_target = Gate.project(_to_gate(pos) + knob_grab)
-	elif finger == lever_finger:
-		lever = clampf(lever_start + (pos.y - lever_start_y) / LEVER_TRAVEL, 0.0, 1.0)
 	elif free_fingers.has(finger):
 		if free_fingers.size() == 2 and camera:
 			var other: Vector2
@@ -176,8 +159,6 @@ func _up(finger: int) -> void:
 			camera.save()
 	if finger == wheel_finger:
 		wheel_finger = -1
-	elif finger == lever_finger:
-		lever_finger = -1
 	elif finger == knob_finger:
 		knob_finger = -1
 		# Released deep enough into a slot: seat it. Otherwise spring back to neutral.
@@ -190,15 +171,13 @@ func _up(finger: int) -> void:
 func _process(dt: float) -> void:
 	if wheel_finger == -1:
 		wheel_angle = move_toward(wheel_angle, 0.0, WHEEL_RETURN * dt)
-	if lever_finger == -1:
-		lever = move_toward(lever, 0.0, 7.0 * dt)
 	knob = Gate.move_along(knob, knob_target, (KNOB_FOLLOW if knob_finger != -1 else KNOB_SETTLE) * dt)
 	_apply_gear()
 
 	if input:
 		var touch_steer := wheel_angle / WHEEL_MAX  # clockwise on screen = right
 		input.steer = kb_steer if absf(kb_steer) > 0.05 else touch_steer
-		input.handbrake = maxf(lever, kb_handbrake)
+		input.handbrake = kb_handbrake
 	queue_redraw()
 
 
@@ -256,12 +235,6 @@ func _draw() -> void:
 	var kp := _gate_to_screen(knob)
 	draw_circle(kp, 50, GHOST_STRONG)
 	draw_arc(kp, 34, 0, TAU, 40, ACCENT, 4.0, true)
-
-	# E-brake lever
-	draw_line(Vector2(lever_x, lever_top - 20), Vector2(lever_x, lever_top + LEVER_TRAVEL + 20), FAINT, 16.0)
-	var hy := lever_top + lever * LEVER_TRAVEL
-	draw_rect(Rect2(lever_x - 58, hy - 34, 116, 68), GHOST_STRONG)
-	draw_string(font, Vector2(lever_x - 58, hy + 8), "E-BRAKE", HORIZONTAL_ALIGNMENT_CENTER, 116, 20, Color(0, 0, 0, 0.7))
 
 	# Reset
 	draw_circle(reset_pos, 36, Color(1, 1, 1, 0.18))
