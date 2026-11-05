@@ -1,12 +1,12 @@
 extends Camera3D
-## Two camera styles, toggled with the VIEW button (remembered between sessions):
-##   ISO:    fixed isometric. Looks down from one corner and never spins, so the world stays put
-##           and you watch the car slide across it. Orthographic, like a classic arcade game.
-##   FOLLOW: high chase cam (think Over the Hill) that turns toward where the car is going.
+## Two camera styles, toggled with the ISO / 3D button (remembered between sessions):
+##   ISO: flat isometric look (orthographic, no perspective), swung around behind the car.
+##   3D:  high perspective chase cam (think Over the Hill).
+## Both turn toward where the car is *going* (its velocity), so "up" on screen is always forward,
+## and in a drift you see the car swing sideways while the road ahead stays in view.
 ## Both zoom: pinch, the -/+ buttons, the mouse wheel or the gamepad's Y/X.
 
 const SAVE_PATH := "user://camera.cfg"
-const ISO_YAW := 45.0            ## looking from the south-east corner
 const ISO := {"pitch_close": 40.0, "pitch_far": 55.0, "size_close": 13.0, "size_far": 50.0, "distance": 45.0}
 const FOLLOW := {"pitch_close": 44.0, "pitch_far": 68.0, "dist_close": 13.0, "dist_far": 42.0}
 
@@ -38,14 +38,12 @@ func _ready() -> void:
 
 
 func view_name() -> String:
-	return "ISO" if iso else "FOLLOW"
+	return "ISO" if iso else "3D"
 
 
 func toggle_view() -> void:
 	iso = not iso
 	_apply_projection()
-	if car:
-		_yaw = deg_to_rad(ISO_YAW) if iso else car.global_rotation.y
 	save()
 
 
@@ -63,7 +61,7 @@ func save() -> void:
 
 func snap() -> void:
 	_focus = car.global_position
-	_yaw = deg_to_rad(ISO_YAW) if iso else car.global_rotation.y
+	_yaw = car.global_rotation.y
 	_place(0.0)
 
 
@@ -85,13 +83,10 @@ func _process(dt: float) -> void:
 	var ahead := (v * look_ahead).limit_length(max_look_ahead)
 	_focus = _focus.lerp(car.global_position + ahead, 1.0 - exp(-follow_sharpness * dt))
 
-	if iso:
-		_yaw = deg_to_rad(ISO_YAW)
-	else:
-		var target_yaw: float = car.global_rotation.y
-		if v.length() > 3.0 and car.forward_speed > 0.0:
-			target_yaw = atan2(-v.x, -v.z)
-		_yaw = lerp_angle(_yaw, target_yaw, 1.0 - exp(-yaw_sharpness * dt))
+	var target_yaw: float = car.global_rotation.y
+	if v.length() > 3.0 and car.forward_speed > 0.0:
+		target_yaw = atan2(-v.x, -v.z)
+	_yaw = lerp_angle(_yaw, target_yaw, 1.0 - exp(-yaw_sharpness * dt))
 	_place(v.length())
 
 

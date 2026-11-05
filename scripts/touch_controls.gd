@@ -3,7 +3,7 @@ extends Control
 ##   Bottom-left:  steering wheel. Put a thumb on it and twist; let go and it spins back to center.
 ##   Bottom-right: H-pattern shifter. Drag the knob through the gate.
 ##   Far right:    e-brake lever. Pull it down; it springs back up.
-##   Top-right:    ISO/FOLLOW camera toggle, RESET, then zoom out (-) and in (+).
+##   Top-right:    ISO/3D camera toggle, RESET, then zoom out (-) and in (+).
 ##                 Pinch anywhere empty to zoom too.
 ##   Center (when the engine's blown): NEW ENGINE.
 ## Everything is semi-transparent white so the night scene shows through.
