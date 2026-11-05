@@ -5,6 +5,12 @@ extends Node3D
 ## only handle a few real lights at once; the glowing pools on the road stay on everywhere.
 
 const Util := preload("res://scripts/util.gd")
+const Batch := preload("res://scripts/mesh_batch.gd")
+
+## Highway ring around the neighbourhood (5th gear finally gets used).
+const HWY_IN := 5.0      ## gap between the town edge and the highway
+const HWY_W := 20.0      ## two lanes each way
+const SODIUM := Color(1.0, 0.72, 0.42)
 
 const BLOCKS := 4
 const BLOCK := 46.0
@@ -224,16 +230,97 @@ func _lane_dashes(cell: float) -> void:
 
 
 func _boundary() -> void:
-	var len := half * 2 + 4
-	Util.static_box(self, Vector3(len, 4, 2), Vector3(0, 2, half + 1))
-	Util.static_box(self, Vector3(len, 4, 2), Vector3(0, 2, -half - 1))
-	Util.static_box(self, Vector3(2, 4, len), Vector3(half + 1, 2, 0))
-	Util.static_box(self, Vector3(2, 4, len), Vector3(-half - 1, 2, 0))
+	_highway()
+	var ring := half + HWY_IN + HWY_W + 1.0
 
-	var p := -half - 10.0
-	while p <= half + 10.0:
-		_tree(self, Vector3(p + rng.randf_range(-2, 2), 0, half + rng.randf_range(4, 14)))
-		_tree(self, Vector3(p + rng.randf_range(-2, 2), 0, -half - rng.randf_range(4, 14)))
-		_tree(self, Vector3(half + rng.randf_range(4, 14), 0, p + rng.randf_range(-2, 2)))
-		_tree(self, Vector3(-half - rng.randf_range(4, 14), 0, p + rng.randf_range(-2, 2)))
-		p += 6.0
+	var p := -ring - 10.0
+	while p <= ring + 10.0:
+		_tree(self, Vector3(p + rng.randf_range(-2, 2), 0, ring + rng.randf_range(4, 14)))
+		_tree(self, Vector3(p + rng.randf_range(-2, 2), 0, -ring - rng.randf_range(4, 14)))
+		_tree(self, Vector3(ring + rng.randf_range(4, 14), 0, p + rng.randf_range(-2, 2)))
+		_tree(self, Vector3(-ring - rng.randf_range(4, 14), 0, p + rng.randf_range(-2, 2)))
+		p += 7.0
+
+
+## A four-lane ring road around the whole neighbourhood, with an on-ramp from the middle street
+## on every side, chamfered corners, concrete barriers and orange sodium lights.
+func _highway() -> void:
+	var batch := Batch.new()
+	var road := Util.lit(Color(0.12, 0.125, 0.14), 0.5)
+	var concrete := Util.lit(Color(0.55, 0.55, 0.57), 0.9)
+	var rail := Util.lit(Color(0.6, 0.62, 0.65), 0.4)
+	var white := Util.glow(Color(1, 1, 1, 0.55))
+	var yellow := Util.glow(Color(0.95, 0.8, 0.3, 0.6))
+	var a := half + HWY_IN               # inner edge of the highway
+	var b := a + HWY_W                   # outer edge
+	var mid := (a + b) / 2
+	var span := b * 2
+	var ramp_half := ROAD / 2 + 1.0
+
+	for side in 4:
+		# Rotate a "north side" layout to each side: +Z, -Z, +X, -X.
+		var basis := Basis(Vector3.UP, [0.0, PI, PI / 2, -PI / 2][side])
+		# Road surface.
+		var surf := Util.box(self, Vector3(span, 0.1, HWY_W), basis * Vector3(0, -0.04, mid), road)
+		surf.rotation = Vector3(0, [0.0, PI, PI / 2, -PI / 2][side], 0)
+		# On-ramp across the verge from the middle street.
+		var r := Util.box(self, Vector3(ROAD, 0.1, HWY_IN + 0.5), basis * Vector3(0, -0.03, half + HWY_IN / 2), road)
+		r.rotation = surf.rotation
+		# Inner jersey barrier, with a gap for the ramp, stopping short of the corners.
+		var inner_len := a - 9.0 - ramp_half
+		for s in [-1.0, 1.0]:
+			var cx: float = s * (ramp_half + inner_len / 2)
+			batch.box(concrete, Vector3(inner_len, 0.9, 0.6), basis * Vector3(cx, 0.45, a - 0.4), rad_to_deg(surf.rotation.y))
+			var wall := Util.static_box(self, Vector3(inner_len, 3, 0.8), basis * Vector3(cx, 1.5, a - 0.4))
+			wall.rotation = surf.rotation
+		# Outer guardrail, stopping where the chamfer starts.
+		var outer_len := (b - 16.0) * 2
+		batch.box(rail, Vector3(outer_len, 0.7, 0.25), basis * Vector3(0, 0.55, b + 0.3), rad_to_deg(surf.rotation.y))
+		var ow := Util.static_box(self, Vector3(outer_len, 4, 1.0), basis * Vector3(0, 2, b + 0.6))
+		ow.rotation = surf.rotation
+		# Lane markings: dashed centre line, solid yellow edge lines.
+		var x := -b + 20.0
+		while x < b - 20.0:
+			batch.ground_quad(white, Vector2(4.0, 0.25), basis * Vector3(x, 0.03, mid), rad_to_deg(surf.rotation.y))
+			x += 10.0
+		batch.ground_quad(yellow, Vector2(span - 30.0, 0.22), basis * Vector3(0, 0.03, a + 0.8), rad_to_deg(surf.rotation.y))
+		batch.ground_quad(yellow, Vector2(span - 30.0, 0.22), basis * Vector3(0, 0.03, b - 0.8), rad_to_deg(surf.rotation.y))
+		# Sodium lights on the inner barrier every ~45 m, arms reaching over the road.
+		var lx := -a + 20.0
+		while lx < a - 20.0:
+			if absf(lx) > ramp_half + 4.0:
+				_hwy_lamp(basis * Vector3(lx, 0, a - 0.4), basis * Vector3(0, 0, 1))
+			lx += 45.0
+
+	# Chamfered corners: diagonal guardrails and walls so the corners sweep instead of boxing in.
+	for cx in [-1.0, 1.0]:
+		for cz in [-1.0, 1.0]:
+			var corner := Vector3(cx * (b - 8.0), 0, cz * (b - 8.0))
+			var yaw := 45.0 if cx * cz > 0 else -45.0
+			batch.box(rail, Vector3(23.0, 0.7, 0.25), corner + Vector3(0, 0.55, 0), yaw)
+			var cw := Util.static_box(self, Vector3(24.0, 4, 1.0), corner + Vector3(cx, 2, cz) * Vector3(0.6, 1, 0.6))
+			cw.rotation_degrees.y = yaw
+			# Fill the outside of the chamfer so you can't tuck into the square corner.
+			var plug := Util.static_box(self, Vector3(12, 4, 12), Vector3(cx * (b + 2.0), 2, cz * (b + 2.0)))
+			plug.rotation_degrees.y = 45.0
+	batch.commit(self, "Highway")
+
+
+func _hwy_lamp(base: Vector3, out: Vector3) -> void:
+	var l := Node3D.new()
+	add_child(l)
+	l.position = base
+	l.basis = Basis.looking_at(out, Vector3.UP)
+	var pole := Util.lit(POLE, 0.4)
+	Util.box(l, Vector3(0.25, 10, 0.25), Vector3(0, 5, 0), pole)
+	Util.box(l, Vector3(0.16, 0.16, 5.0), Vector3(0, 10, -2.5), pole)
+	Util.box(l, Vector3(0.5, 0.18, 1.1), Vector3(0, 9.9, -5.0), Util.emissive(SODIUM, 3.5))
+	var light := OmniLight3D.new()
+	l.add_child(light)
+	light.position = Vector3(0, 9.4, -5.0)
+	light.omni_range = 26.0
+	light.light_energy = 3.2
+	light.light_color = SODIUM
+	light.shadow_enabled = false
+	lights.append(light)
+	Util.decal(l, Vector2(18, 18), Vector3(0, 0.035, -5.0), Util.glow(Color(SODIUM.r, SODIUM.g, SODIUM.b, 0.18), true))

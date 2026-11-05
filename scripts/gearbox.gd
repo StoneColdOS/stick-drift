@@ -6,7 +6,7 @@ const REVERSE := -1
 const NEUTRAL := 0
 const TOP := 5
 const REVERSE_RATIO := 3.484
-const FORWARD := [3.587, 2.022, 1.384, 1.000, 0.861]
+const FORWARD := [3.587, 2.022, 1.384, 1.000, 0.72]  ## 5th is a tall overdrive for the highway
 
 
 static func ratio(gear: int) -> float:

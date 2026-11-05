@@ -38,7 +38,7 @@ Built in Godot 4.7.
 | Reset | RESET (top-right) | Enter | Start |
 | Map | MAP: SUBURB / TOKYO (top-left), reloads the game | | |
 
-- **The gas is always on** whenever you're in gear. Short gears keep it chill: about 22 / 40 / 58 / 79 / 92 mph in 1st to 5th.
+- **The gas is always on** whenever you're in gear. Short gears keep it chill around the blocks (about 22 / 40 / 58 / 79 mph in 1st to 4th); 5th is a tall overdrive for the **highway ring** around the neighbourhood, reached by a ramp from the middle street on each side.
 - **Slow down** by downshifting (engine braking) or knocking it into **neutral**.
 - **Drift:** there's no e-brake. Get going in 2nd and either **flick** the wheel quickly or **downshift while turning** (a clutch kick) to break the rear loose, then countersteer. Smooth steering stays planted. 2nd is the drift gear; once you're sliding you get full power to hold it.
 - **Forgiving by default:** the auto gas keeps the rear tires hooked up while you're just driving, and steering tightens up with speed, so the car only slides when you kick it out. Once you're sliding you get full power to hold it, a little countersteer assist, and past about 35° the car resists spinning out.
@@ -62,7 +62,7 @@ Everything is built in code from `scripts/main.gd`, no scene editing needed.
 | `scripts/tokyo.gd` | Tokyo-style district: buildings, windows, neon, vending machines, poles and wires, crosswalks, central lot |
 | `scripts/building.gdshader` | Building material with an x-ray circle cut around the car so tall buildings never hide it |
 | `scripts/mesh_batch.gd` | Merges thousands of boxes into a few meshes per material (keeps phones fast) |
-| `scripts/neighborhood.gd` | The night suburb and street lights |
+| `scripts/neighborhood.gd` | The night suburb, street lights, and the highway ring around it |
 | `scripts/car_model.gd` | Low-poly S13-style coupe, headlight/tail light glow, exhaust and backfires, skid marks, smoke |
 | `scripts/chase_camera.gd` | Isometric or perspective chase camera, with zoom (both remembered) |
 | `scripts/haptics.gd` | Vibration on gear changes |

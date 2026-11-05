@@ -186,7 +186,8 @@ func _run() -> void:
 	main.touch.snap_to_gear(2)
 	await _secs(8.0)
 	var town = main.town
-	_check(absf(car.global_position.x) < town.half and absf(car.global_position.z) < town.half, "Can't drive off the map")
+	var limit: float = town.half + 30.0  # the suburb's highway ring sits just outside the town
+	_check(absf(car.global_position.x) < limit and absf(car.global_position.z) < limit, "Can't drive off the map")
 
 	print("\n%s: %d failure(s)" % ["PASS" if failures == 0 else "FAIL", failures])
 	quit(1 if failures > 0 else 0)
