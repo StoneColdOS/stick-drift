@@ -13,6 +13,7 @@ const ISO := {"pitch_close": 34.0, "pitch_far": 62.0, "size_close": 9.0, "size_f
 const FOLLOW := {"pitch_close": 44.0, "pitch_far": 68.0, "dist_close": 13.0, "dist_far": 42.0}
 
 var car  ## car.gd
+var env: Environment  ## fog follows the zoom
 var iso := true
 var zoom := 0.05                 ## base zoom when slow: 0 = close, 1 = far
 var look_ahead := 0.7             ## seconds of travel the camera leads by
@@ -119,5 +120,10 @@ func _place(_spd: float) -> void:
 	else:
 		pitch = lerpf(FOLLOW.pitch_close, FOLLOW.pitch_far, z)
 		d = lerpf(FOLLOW.dist_close, FOLLOW.dist_far, z)
+	if env:
+		# Clear around the car, fading out to the night beyond. Wider views push the fog back.
+		var reach: float = size if iso else d
+		env.fog_depth_begin = d - reach * 0.1
+		env.fog_depth_end = d + reach * 1.6 + 15.0
 	var b := Basis.from_euler(Vector3(deg_to_rad(-pitch), _yaw, 0.0))
 	global_transform = Transform3D(b, _focus + b.z * d)

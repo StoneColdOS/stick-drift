@@ -12,12 +12,12 @@ const ROAD := 16.0
 const LIGHT_RADIUS := 48.0
 
 const LED_WHITE := Color(0.86, 0.92, 1.0)
-const ASPHALT := Color(0.15, 0.155, 0.17)
-const LOT_ASPHALT := Color(0.17, 0.175, 0.19)
-const SIDEWALK := Color(0.36, 0.36, 0.38)
-const LAWN := Color(0.10, 0.20, 0.11)
-const OUTER_GRASS := Color(0.06, 0.11, 0.07)
-const ROOF := Color(0.16, 0.15, 0.17)
+const ASPHALT := Color(0.16, 0.165, 0.19)
+const LOT_ASPHALT := Color(0.19, 0.195, 0.22)
+const SIDEWALK := Color(0.4, 0.4, 0.43)
+const LAWN := Color(0.12, 0.22, 0.13)
+const OUTER_GRASS := Color(0.08, 0.14, 0.09)
+const ROOF := Color(0.2, 0.18, 0.2)
 const TRUNK := Color(0.22, 0.15, 0.10)
 const POLE := Color(0.25, 0.26, 0.28)
 const WINDOW_WARM := Color(1.0, 0.76, 0.42)
@@ -29,7 +29,7 @@ const HOUSE_COLORS := [
 	Color(0.62, 0.68, 0.74), Color(0.74, 0.68, 0.56), Color(0.56, 0.64, 0.54),
 	Color(0.58, 0.58, 0.60), Color(0.80, 0.77, 0.68), Color(0.62, 0.48, 0.44),
 ]
-const LEAF_COLORS := [Color(0.07, 0.17, 0.09), Color(0.09, 0.20, 0.10), Color(0.06, 0.14, 0.10)]
+const LEAF_COLORS := [Color(0.08, 0.16, 0.13), Color(0.1, 0.19, 0.14), Color(0.07, 0.13, 0.12)]
 
 var rng := RandomNumberGenerator.new()
 var lights: Array[OmniLight3D] = []
@@ -173,12 +173,13 @@ func _tree(parent: Node3D, pos: Vector3) -> void:
 	parent.add_child(t)
 	t.position = pos
 	t.scale = Vector3.ONE * rng.randf_range(0.8, 1.25)
-	Util.box(t, Vector3(0.45, 2.2, 0.45), Vector3(0, 1.1, 0), Util.lit(TRUNK, 1.0))
+	# Low-poly pine: stacked six-sided cones.
+	Util.box(t, Vector3(0.35, 1.2, 0.35), Vector3(0, 0.6, 0), Util.lit(TRUNK, 1.0))
 	var leaf := Util.lit(LEAF_COLORS[rng.randi() % LEAF_COLORS.size()], 1.0)
-	Util.box(t, Vector3(2.8, 2.4, 2.8), Vector3(0, 3.2, 0), leaf,
-		Vector3(rng.randf_range(-8, 8), rng.randf_range(0, 90), rng.randf_range(-8, 8)))
-	Util.box(t, Vector3(1.9, 1.7, 1.9), Vector3(0, 4.5, 0), leaf,
-		Vector3(rng.randf_range(-10, 10), rng.randf_range(0, 90), rng.randf_range(-10, 10)))
+	var yaw := rng.randf_range(0, 60)
+	Util.cone(t, 1.9, 2.6, Vector3(0, 0.8, 0), leaf, yaw)
+	Util.cone(t, 1.45, 2.3, Vector3(0, 2.2, 0), leaf, yaw + 20)
+	Util.cone(t, 1.0, 2.3, Vector3(0, 3.5, 0), leaf, yaw + 40)
 
 
 ## A street light whose arm reaches out over the road in direction `out`.

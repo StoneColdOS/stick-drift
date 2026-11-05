@@ -17,7 +17,7 @@ const TouchControls := preload("res://scripts/touch_controls.gd")
 const Hud := preload("res://scripts/hud.gd")
 const Haptics := preload("res://scripts/haptics.gd")
 
-const NIGHT_SKY := Color(0.035, 0.045, 0.08)
+const NIGHT_SKY := Color(0.1, 0.12, 0.18)  ## also the fog colour, so the distance melts away
 const PIXEL_SHRINK := 2  ## 720 / 2 = 360 pixel-tall world. Lower = sharper, higher = chunkier.
 const SEQUENCE := [-1, 0, 1, 2, 3, 4, 5]  ## for gamepad up/down shifting
 
@@ -29,6 +29,7 @@ var car: RigidBody3D
 var camera: Camera3D
 var touch: Control
 var hud: Control
+var environment: Environment
 
 
 func _ready() -> void:
@@ -40,6 +41,9 @@ func _ready() -> void:
 	container.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var post := ShaderMaterial.new()
+	post.shader = load("res://scripts/retro.gdshader")
+	container.material = post
 	add_child(container)
 	world_viewport = SubViewport.new()
 	world_viewport.msaa_3d = Viewport.MSAA_DISABLED
@@ -72,6 +76,7 @@ func _ready() -> void:
 
 	camera = ChaseCamera.new()
 	camera.car = car
+	camera.env = environment
 	world.add_child(camera)
 	camera.current = true
 	camera.snap()
@@ -94,11 +99,17 @@ func _build_environment() -> void:
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = NIGHT_SKY
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.32, 0.35, 0.48)
+	env.ambient_light_color = Color(0.3, 0.33, 0.45)
 	env.ambient_light_energy = 1.0
+	# Depth fog the same colour as the night sky: clear around the car, swallowing the
+	# distance. The camera moves the start/end as it zooms.
 	env.fog_enabled = true
+	env.fog_mode = Environment.FOG_MODE_DEPTH
 	env.fog_light_color = NIGHT_SKY
-	env.fog_density = 0.003
+	env.fog_density = 1.0
+	env.fog_depth_curve = 1.4
+	env.fog_depth_begin = 20.0
+	env.fog_depth_end = 70.0
 	env.glow_enabled = true
 	env.glow_intensity = 0.7
 	env.glow_bloom = 0.05
@@ -106,6 +117,7 @@ func _build_environment() -> void:
 	var we := WorldEnvironment.new()
 	we.environment = env
 	world.add_child(we)
+	environment = env
 
 	var moon := DirectionalLight3D.new()
 	moon.light_color = Color(0.55, 0.62, 0.85)
@@ -116,6 +128,7 @@ func _build_environment() -> void:
 
 
 func _process(_dt: float) -> void:
+
 	var kb_steer := Input.get_axis("steer_left", "steer_right")
 	touch.kb_steer = kb_steer
 	if Input.is_action_just_pressed("kick"):
