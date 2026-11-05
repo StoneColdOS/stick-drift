@@ -4,7 +4,9 @@ extends Camera3D
 ##   3D:  high perspective chase cam (think Over the Hill).
 ## Both turn toward where the car is *going* (its velocity), so "up" on screen is always forward,
 ## and in a drift you see the car swing sideways while the road ahead stays in view.
-## Both zoom: pinch, the -/+ buttons, the mouse wheel or the gamepad's Y/X.
+## Zoom is dynamic: close when you're slow, pulling out as you speed up and a bit more while
+## drifting, then easing back in. Pinch, the -/+ buttons, the mouse wheel or the gamepad's Y/X
+## set how close it sits when you're slow.
 
 const SAVE_PATH := "user://camera.cfg"
 const ISO := {"pitch_close": 40.0, "pitch_far": 55.0, "size_close": 13.0, "size_far": 50.0, "distance": 45.0}
@@ -12,14 +14,17 @@ const FOLLOW := {"pitch_close": 44.0, "pitch_far": 68.0, "dist_close": 13.0, "di
 
 var car  ## car.gd
 var iso := true
-var zoom := 0.2                  ## 0 = close, 1 = far
+var zoom := 0.08                 ## base zoom when slow: 0 = close, 1 = far
 var look_ahead := 0.35
 var max_look_ahead := 9.0
-var speed_zoom := 0.1
+var speed_pull := 0.5             ## extra zoom at full speed (0 turns the dynamic zoom off)
+var full_speed := 35.0            ## m/s where the speed pull maxes out (~78 mph)
+var drift_pull := 0.15            ## extra zoom while drifting
 var follow_sharpness := 6.0
 var yaw_sharpness := 2.6
 
-var _zoom_smooth := 0.2
+var _zoom_smooth := 0.08
+var _dyn := 0.0
 var _yaw := 0.0
 var _focus := Vector3.ZERO
 
@@ -29,7 +34,7 @@ func _ready() -> void:
 	far = 400.0
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) == OK:
-		zoom = clampf(cfg.get_value("camera", "zoom", zoom), 0.0, 1.0)
+		zoom = clampf(cfg.get_value("camera", "base_zoom", zoom), 0.0, 1.0)
 		iso = cfg.get_value("camera", "iso", iso)
 	_zoom_smooth = zoom
 	_apply_projection()
@@ -54,7 +59,7 @@ func zoom_by(amount: float) -> void:
 
 func save() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("camera", "zoom", zoom)
+	cfg.set_value("camera", "base_zoom", zoom)
 	cfg.set_value("camera", "iso", iso)
 	cfg.save(SAVE_PATH)
 
@@ -80,6 +85,14 @@ func _process(dt: float) -> void:
 	var v: Vector3 = car.linear_velocity
 	v.y = 0.0
 
+	# Dynamic zoom: pull out with speed and drifting. Out a bit quicker than back in, so it
+	# doesn't pump in and out between gear changes.
+	var dyn_target := clampf(v.length() / full_speed, 0.0, 1.0) * speed_pull
+	if car.drifting:
+		dyn_target += drift_pull
+	var rate := 1.6 if dyn_target > _dyn else 0.7
+	_dyn = lerpf(_dyn, dyn_target, 1.0 - exp(-rate * dt))
+
 	var ahead := (v * look_ahead).limit_length(max_look_ahead)
 	_focus = _focus.lerp(car.global_position + ahead, 1.0 - exp(-follow_sharpness * dt))
 
@@ -90,16 +103,16 @@ func _process(dt: float) -> void:
 	_place(v.length())
 
 
-func _place(spd: float) -> void:
-	var z := _zoom_smooth
+func _place(_spd: float) -> void:
+	var z := clampf(_zoom_smooth + _dyn, 0.0, 1.0)
 	var pitch: float
 	var d: float
 	if iso:
 		pitch = lerpf(ISO.pitch_close, ISO.pitch_far, z)
-		size = lerpf(ISO.size_close, ISO.size_far, z) + spd * speed_zoom * 0.5
+		size = lerpf(ISO.size_close, ISO.size_far, z)
 		d = ISO.distance
 	else:
 		pitch = lerpf(FOLLOW.pitch_close, FOLLOW.pitch_far, z)
-		d = lerpf(FOLLOW.dist_close, FOLLOW.dist_far, z) + spd * speed_zoom
+		d = lerpf(FOLLOW.dist_close, FOLLOW.dist_far, z)
 	var b := Basis.from_euler(Vector3(deg_to_rad(-pitch), _yaw, 0.0))
 	global_transform = Transform3D(b, _focus + b.z * d)

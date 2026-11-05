@@ -34,7 +34,7 @@ Built in Godot 4.7.
 | Shift | Drag the knob through the H gate (bottom-right) | 1-5, N or 0, R | R1 up / L1 down |
 | E-brake | Pull the lever down (far right) | Space | B or L2 |
 | Camera | ISO / 3D button (top-right): flat isometric or perspective, both behind the car | V | Select |
-| Zoom | Pinch anywhere empty, or the − / + buttons (top-right) | - / = or mouse wheel | Y / X |
+| Zoom | Automatic: close when slow, pulls out with speed and drifting. Pinch or − / + sets how close it sits when slow | - / = or mouse wheel | Y / X |
 | Reset | RESET (top-right) | Enter | Start |
 
 - **The gas is always on** whenever you're in gear.
