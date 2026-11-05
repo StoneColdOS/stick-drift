@@ -69,6 +69,18 @@ func _run() -> void:
 	_check(car.motor.health > 0.95, "Good shifting keeps the engine healthy (%.2f)" % car.motor.health)
 	_check(car.speed > 35.0, "Gets up to speed (%.0f mph)" % (car.speed * 2.237))
 
+	# --- Normal steering at speed doesn't throw the car sideways
+	var planted := 0.0
+	main.touch.snap_to_gear(4)
+	Input.action_press("steer_right", 0.7)
+	for i in 240:
+		await physics_frame
+		planted = maxf(planted, absf(car.slip_angle))
+	Input.action_release("steer_right")
+	_check(planted < 10.0, "Hard steering at speed stays planted without the e-brake (max %.0f°)" % planted)
+	main.touch.snap_to_gear(4)
+	await _secs(1.0)
+
 	# --- Downshift to slow down (one gear) then money shift (way down)
 	var before: float = car.speed
 	main.touch.snap_to_gear(3)

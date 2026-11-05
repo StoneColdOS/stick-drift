@@ -17,21 +17,25 @@ var motor := Motor.new()
 # --- Drivetrain
 var wheel_radius := 0.3
 var final_drive := 4.3
-var torque_multiplier := 1.7      ## arcade boost; raise for more power oversteer
+var torque_multiplier := 1.6      ## arcade boost; raise for more power oversteer
 
 # --- Chassis (distances along the car's forward axis)
 var front_axle := 1.25
 var rear_axle := -1.2
 var max_steer_angle := 42.0
 var steer_speed := 260.0          ## degrees per second the front wheels can turn
+var steer_grip_limit := 1.3       ## at speed, full wheel = the tightest turn the tires can hold x this. Lower = more forgiving
+var steer_curve := 1.6            ## >1 = gentler near center, finer control
 var countersteer_assist := 0.3    ## 0 = off. Helps catch slides by adding some countersteer for you
 
 # --- Tires
-var front_grip := 1.2
-var rear_grip := 0.9
+var front_grip := 1.0
+var rear_grip := 1.1
 var min_rear_lateral_share := 0.38## rear keeps this much side grip at full wheelspin, so drifts stay catchable
 var handbrake_grip_scale := 0.3
 var handbrake_brake := 0.3
+var traction_control := 0.8       ## when not drifting, the auto gas only uses this share of rear grip. 0 = off
+var drift_latch_time := 1.0       ## after the e-brake, full power stays on this long (and while sliding)
 var base_angular_damp := 0.7
 var spin_guard := 0.8              ## past ~35° of slip the rear grips back up, up to this share. Lower = easier to spin
 
@@ -54,6 +58,7 @@ var drifting := false
 var _spawn: Transform3D
 var _reset_requested := false
 var _was_blown := false
+var _drift_latch := 0.0
 
 
 func _ready() -> void:
@@ -116,10 +121,19 @@ func _physics_process(dt: float) -> void:
 		gear = requested
 		gear_changed.emit(old, gear)
 
-	var steer_in: float = input.steer if input else 0.0
+	var raw: float = input.steer if input else 0.0
+	var steer_in := signf(raw) * pow(absf(raw), steer_curve)
+	# Countersteering (steering into the slide) always gets full lock. Otherwise the wheels
+	# turn less the faster you go, so small thumb moves at speed don't throw the car sideways.
+	var countersteering := absf(slip_angle) > 8.0 and steer_in * -slip_angle > 0.0
+	var lock := max_steer_angle
+	if not countersteering:
+		var wheelbase := front_axle - rear_axle
+		var grip_angle := rad_to_deg(atan(wheelbase * G * front_grip * steer_grip_limit / maxf(speed * speed, 0.01)))
+		lock = clampf(grip_angle, 4.0, max_steer_angle)
 	if absf(slip_angle) > 10.0:
 		steer_in = clampf(steer_in - countersteer_assist * clampf(slip_angle / 45.0, -1.0, 1.0), -1.0, 1.0)
-	var target_steer: float = steer_in * max_steer_angle
+	var target_steer: float = steer_in * lock
 	steer_angle = move_toward(steer_angle, target_steer, steer_speed * dt)
 
 	var fwd := forward()
@@ -172,6 +186,20 @@ func _physics_process(dt: float) -> void:
 	var rv := _point_velocity(r_off)
 	var r_lat := rv.dot(right)
 	var r_long := rv.dot(fwd)
+
+	# Smart auto gas: keep the rear hooked up during normal driving, but give full power
+	# once you've started a drift (e-brake, or already sliding) so you can hold it.
+	if hb > 0.3:
+		_drift_latch = drift_latch_time
+	elif absf(slip_angle) > 12.0 and _drift_latch > 0.0:
+		_drift_latch = maxf(_drift_latch, 0.3)
+	else:
+		_drift_latch = maxf(0.0, _drift_latch - dt)
+	if traction_control > 0.0 and _drift_latch <= 0.0 and drive > 0.0:
+		# Leave the rear enough grip for the corner it's in (friction circle), then cap.
+		var lat_need := minf(absf(r_lat) * stiffness, rear_max)
+		var long_room := sqrt(maxf(0.0, rear_max * rear_max - lat_need * lat_need))
+		drive = minf(drive, maxf(long_room * traction_control, rear_max * 0.15))
 
 	var long_f := clampf(drive, -rear_max, rear_max)
 	var spin_excess := maxf(0.0, absf(drive) - rear_max) / maxf(rear_max, 1.0)

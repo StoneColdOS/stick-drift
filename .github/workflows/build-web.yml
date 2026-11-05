@@ -48,6 +48,7 @@ jobs:
 
       - name: Export web build
         run: |
+          sed -i 's/const BUILD := "dev"/const BUILD := "${{ github.run_number }}"/' scripts/hud.gd
           mkdir -p export/web
           godot --headless --import || true
           godot --headless --export-release "Web" export/web/index.html

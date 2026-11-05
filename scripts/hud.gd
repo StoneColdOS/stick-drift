@@ -3,6 +3,7 @@ extends Control
 
 const Gearbox := preload("res://scripts/gearbox.gd")
 
+const BUILD := "dev"  ## replaced with the build number by the web build
 const TACH_MAX := 10000.0
 const TACH_W := 520.0
 const WHITE := Color(1, 1, 1, 0.9)
@@ -43,6 +44,8 @@ func _draw() -> void:
 	var cx := s.x / 2
 	var m = car.motor
 	var flash := fmod(Time.get_ticks_msec() / 1000.0 * 8.0, 1.0) > 0.5
+
+	draw_string(font, Vector2(40, s.y - 14), "build " + BUILD, HORIZONTAL_ALIGNMENT_LEFT, 200, 14, Color(1, 1, 1, 0.3))
 
 	# Gear + speed
 	draw_string(font, Vector2(cx - 60, 105), Gearbox.label(car.gear), HORIZONTAL_ALIGNMENT_CENTER, 120, 96, WHITE)

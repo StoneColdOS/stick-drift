@@ -39,7 +39,7 @@ Built in Godot 4.7.
 - **The gas is always on** whenever you're in gear.
 - **Slow down** by downshifting (engine braking) or knocking it into **neutral**.
 - **Drift:** get going in 2nd, flick the wheel and tug the e-brake, then countersteer. 2nd is the drift gear; it has just enough power to keep the rear sliding.
-- **Forgiving by default:** a little countersteer assist, and past about 35° of slide the car resists spinning out, so letting go of the wheel usually saves it.
+- **Forgiving by default:** the auto gas keeps the rear tires hooked up while you're just driving, and steering tightens up with speed, so the car only slides when you start a drift with the e-brake. Once you're sliding you get full power to hold it, a little countersteer assist, and past about 35° the car resists spinning out.
 - **Engine damage:** sitting on the limiter (~7900+ rpm) wears it down over about 25 seconds, and a money shift (way past 9800 rpm) kills it fast. Watch for **SHIFT!**
 - **Vibration:** gear changes buzz on the Thor and Android. On iPhone (iOS 18+) you get a haptic tick when your thumb lifts off the shifter; Safari doesn't allow anything better.
 
@@ -69,7 +69,8 @@ In `scripts/car.gd`:
 
 - More slide: lower `rear_grip`, raise `torque_multiplier`
 - Easier to catch a drift: raise `countersteer_assist`, `spin_guard` or `min_rear_lateral_share`
-- Harder / more raw: set `countersteer_assist` and `spin_guard` to 0
+- Harder / more raw: set `traction_control`, `countersteer_assist` and `spin_guard` to 0
+- Steering sharpness at speed: `steer_grip_limit` (higher = sharper, easier to overdo)
 - E-brake: `handbrake_grip_scale` (lower = looser rear), `handbrake_brake` (higher = scrubs more speed)
 
 In `scripts/motor.gd`: `damage_rpm`, `sustained_damage`, `money_shift_rpm`.
